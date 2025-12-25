@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "musicxml-to-png"
+version = "1.0.0"
+description = "Convert MusicXML files into clean, analyzable PNG visualizations"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [
+    {name = "Rob Mosher"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "music21>=9.1.0",
+    "matplotlib>=3.8.0",
+    "numpy>=1.24.0",
+]
+
+[project.scripts]
+musicxml-to-png = "musicxml_to_png.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["musicxml_to_png*"]
+
