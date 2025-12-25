@@ -7,7 +7,7 @@ Convert MusicXML files into clean, analyzable PNG visualizations showing:
 - Temporal flow (horizontal axis = time)
 - Pitch range (vertical axis = low to high)
 - Note duration (length of visual bars)
-- Instrument families (color-coded: strings, winds, brass, percussion)
+- Instrument families (color-coded by ensemble type)
 
 ## Requirements
 
@@ -76,18 +76,45 @@ Convert a MusicXML file to PNG:
 python -m musicxml_to_png input.xml
 ```
 
-This creates `input.png` in the same directory.
+This creates `input.png` in the same directory. Supports both `.xml` and `.mxl` (compressed) MusicXML files.
 
-Specify a custom output file:
+**Basic Options:**
 
 ```bash
+# Specify custom output file
 python -m musicxml_to_png input.xml -o output.png
+
+# Add custom title
+python -m musicxml_to_png input.xml --title "My Composition"
+
+# Disable grid lines
+python -m musicxml_to_png input.xml --no-grid
+
+# Minimal mode (no labels, legend, title, or borders)
+python -m musicxml_to_png input.xml --minimal
+
+# Show music21 warnings and diagnostics
+python -m musicxml_to_png input.xml --verbose
+# or
+python -m musicxml_to_png input.xml -v
 ```
 
-Add a custom title to the visualization:
+**Ensemble Types:**
+
+Select the instrument categorization scheme:
 
 ```bash
-python -m musicxml_to_png input.xml --title "My Composition"
+# Orchestra (default) - strings, winds, brass, percussion
+python -m musicxml_to_png input.xml
+
+# Bigband - trumpets, trombones, saxophones, rhythm section
+python -m musicxml_to_png input.xml --ensemble bigband
+```
+
+**Combining Options:**
+
+```bash
+python -m musicxml_to_png input.xml --ensemble bigband --minimal --no-grid -o output.png
 ```
 
 After installation, you can also use the `musicxml-to-png` command directly:
@@ -104,11 +131,21 @@ Use as a library in your Python code:
 from musicxml_to_png import convert_musicxml_to_png
 from pathlib import Path
 
-# Convert MusicXML to PNG
+# Basic conversion
 output_path = convert_musicxml_to_png(
     input_path=Path("input.xml"),
     output_path=Path("output.png"),  # Optional
     title="My Composition"  # Optional
+)
+
+# With all options
+output_path = convert_musicxml_to_png(
+    input_path=Path("input.xml"),
+    output_path=Path("output.png"),
+    title="My Composition",
+    show_grid=False,           # Disable grid lines
+    minimal=True,              # Remove all labels/borders
+    ensemble="bigband"         # Use bigband categorization
 )
 ```
 
@@ -118,16 +155,26 @@ output_path = convert_musicxml_to_png(
 - music21 library (for MusicXML parsing)
 - matplotlib (for PNG generation)
 
-## Initial Features (v1)
+## Features
 
-- Parse MusicXML file
+- Parse MusicXML files (`.xml`, `.musicxml`, `.mxl`)
 - Extract note events (pitch, duration, start time, instrument)
-- Map to 2D visualization (time × pitch)
-- Color-code by instrument family
-- Export as clean PNG
+- High-resolution 2D visualization (time × pitch) with fine-grained grid
+- Multiple ensemble types:
+  - **Orchestra**: strings, winds, brass, percussion
+  - **Bigband**: trumpets, trombones, saxophones, rhythm section
+- Color-coded instrument families (distinct palettes per ensemble)
+- Customizable visualization:
+  - Grid lines (enabled by default, disable with `--no-grid`)
+  - Minimal mode (remove all labels, legend, title, borders)
+  - Custom titles
+  - Verbose mode for debugging (`-v`/`--verbose`)
+- Export as high-resolution PNG (300 DPI)
 
 ## Future Features
 
+- Auto-detection of ensemble type
 - Opacity for dynamics
 - Articulation markers
 - Configurable color schemes
+- Additional ensemble types (jazz combo, chamber, etc.)
