@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 from musicxml_to_png.converter import convert_musicxml_to_png
+from musicxml_to_png.instruments import ENSEMBLE_ORCHESTRA, ENSEMBLE_BIGBAND
 
 
 def main() -> None:
@@ -19,6 +20,7 @@ Examples:
   %(prog)s input.xml --title "My Composition"
   %(prog)s input.xml --no-grid
   %(prog)s input.xml --minimal
+  %(prog)s input.xml --ensemble bigband
         """,
     )
     
@@ -56,6 +58,14 @@ Examples:
         help="Remove all labels, legend, title, and borders for a clean visualization",
     )
     
+    parser.add_argument(
+        "--ensemble",
+        type=str,
+        default=ENSEMBLE_ORCHESTRA,
+        choices=[ENSEMBLE_ORCHESTRA, ENSEMBLE_BIGBAND],
+        help=f"Ensemble type for instrument categorization (default: {ENSEMBLE_ORCHESTRA})",
+    )
+    
     args = parser.parse_args()
     
     # Convert input path to Path object
@@ -84,6 +94,7 @@ Examples:
             title=args.title if not args.minimal else None,
             show_grid=not args.no_grid,
             minimal=args.minimal,
+            ensemble=args.ensemble,
         )
         print(f"Successfully created visualization: {result_path}")
     except FileNotFoundError as e:

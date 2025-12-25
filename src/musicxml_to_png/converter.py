@@ -10,11 +10,20 @@ from music21 import converter, stream, note, instrument, pitch, chord
 from musicxml_to_png.instruments import (
     get_instrument_family,
     get_family_color,
-    FAMILY_STRINGS,
-    FAMILY_WINDS,
-    FAMILY_BRASS,
-    FAMILY_PERCUSSION,
-    FAMILY_UNKNOWN,
+    ENSEMBLE_ORCHESTRA,
+    ENSEMBLE_BIGBAND,
+    # Orchestra families
+    ORCHESTRA_STRINGS,
+    ORCHESTRA_WINDS,
+    ORCHESTRA_BRASS,
+    ORCHESTRA_PERCUSSION,
+    ORCHESTRA_UNKNOWN,
+    # Bigband families
+    BIGBAND_TRUMPETS,
+    BIGBAND_TROMBONES,
+    BIGBAND_SAXOPHONES,
+    BIGBAND_RHYTHM_SECTION,
+    BIGBAND_UNKNOWN,
 )
 
 
@@ -34,12 +43,13 @@ class NoteEvent:
         self.instrument_family = instrument_family
 
 
-def extract_notes(score: stream.Score) -> List[NoteEvent]:
+def extract_notes(score: stream.Score, ensemble: str = ENSEMBLE_ORCHESTRA) -> List[NoteEvent]:
     """
     Extract note events from a music21 Score.
     
     Args:
         score: music21 Score object
+        ensemble: Ensemble type (orchestra or bigband), defaults to orchestra
     
     Returns:
         List of NoteEvent objects
@@ -70,6 +80,7 @@ def extract_notes(score: stream.Score) -> List[NoteEvent]:
         instrument_family = get_instrument_family(
             midi_program=midi_program,
             instrument_name=instrument_name,
+            ensemble=ensemble,
         )
         
         # Extract notes from this part
@@ -116,6 +127,7 @@ def create_visualization(
     score_duration: Optional[float] = None,
     show_grid: bool = True,
     minimal: bool = False,
+    ensemble: str = ENSEMBLE_ORCHESTRA,
 ) -> None:
     """
     Create a 2D visualization of note events and save as PNG.
@@ -129,6 +141,7 @@ def create_visualization(
                        If None, calculates from note events only.
         show_grid: Whether to display grid lines (default: True)
         minimal: If True, removes labels, legend, title, and borders (default: False)
+        ensemble: Ensemble type (orchestra or bigband), defaults to orchestra
     """
     if not note_events:
         raise ValueError("No notes found in the MusicXML file")
@@ -168,7 +181,7 @@ def create_visualization(
     bar_height = max(0.3, min(0.8, 1.0 / max(1, pitch_range / 20)))
     
     for event in note_events:
-        color = get_family_color(event.instrument_family)
+        color = get_family_color(event.instrument_family, ensemble=ensemble)
         ax.barh(
             event.pitch_midi,
             event.duration,
@@ -238,19 +251,27 @@ def create_visualization(
                       labelleft=False, labelbottom=False, labeltop=False, labelright=False,
                       length=0, width=0)
     
-    # Create legend for instrument families
+    # Create legend for instrument families (ensemble-specific)
     legend_elements = []
-    family_order = [FAMILY_STRINGS, FAMILY_WINDS, FAMILY_BRASS, FAMILY_PERCUSSION]
+    if ensemble == ENSEMBLE_BIGBAND:
+        family_order = [BIGBAND_TRUMPETS, BIGBAND_TROMBONES, BIGBAND_SAXOPHONES, BIGBAND_RHYTHM_SECTION]
+        unknown_family = BIGBAND_UNKNOWN
+    else:  # Default to orchestra
+        family_order = [ORCHESTRA_STRINGS, ORCHESTRA_WINDS, ORCHESTRA_BRASS, ORCHESTRA_PERCUSSION]
+        unknown_family = ORCHESTRA_UNKNOWN
+    
     for family in family_order:
         if family in families_present:
-            color = get_family_color(family)
+            color = get_family_color(family, ensemble=ensemble)
+            # Format label nicely (replace underscores with spaces, capitalize)
+            label = family.replace("_", " ").title()
             legend_elements.append(
-                mpatches.Patch(color=color, label=family.capitalize())
+                mpatches.Patch(color=color, label=label)
             )
     
     # Add unknown family if present
-    if FAMILY_UNKNOWN in families_present:
-        color = get_family_color(FAMILY_UNKNOWN)
+    if unknown_family in families_present:
+        color = get_family_color(unknown_family, ensemble=ensemble)
         legend_elements.append(
             mpatches.Patch(color=color, label="Unknown")
         )
@@ -279,6 +300,7 @@ def convert_musicxml_to_png(
     title: Optional[str] = None,
     show_grid: bool = True,
     minimal: bool = False,
+    ensemble: str = ENSEMBLE_ORCHESTRA,
 ) -> Path:
     """
     Convert a MusicXML file to a PNG visualization.
@@ -290,6 +312,7 @@ def convert_musicxml_to_png(
         title: Optional title for the visualization
         show_grid: Whether to display grid lines (default: True)
         minimal: If True, removes labels, legend, title, and borders (default: False)
+        ensemble: Ensemble type (orchestra or bigband), defaults to orchestra
     
     Returns:
         Path to the created PNG file
@@ -316,7 +339,7 @@ def convert_musicxml_to_png(
         raise ValueError(f"Failed to parse MusicXML file: {e}") from e
     
     # Extract note events
-    note_events = extract_notes(score)
+    note_events = extract_notes(score, ensemble=ensemble)
     
     # Get the actual duration of the score (in quarter notes/beats)
     # This accounts for all measures, not just where notes are
@@ -327,7 +350,7 @@ def convert_musicxml_to_png(
         title = input_path.stem
     
     # Create visualization
-    create_visualization(note_events, output_path, title, score_duration, show_grid, minimal)
+    create_visualization(note_events, output_path, title, score_duration, show_grid, minimal, ensemble)
     
     return output_path
 
