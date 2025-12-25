@@ -1,38 +1,95 @@
 # musicxml-to-png
 
+A tool for human-AI musical collaboration
+
+## Vision
+
+MusicXML is rich and expressive for human-facing notation software, but challenging for AI systems to "see" structurally. This tool bridges that gap by converting MusicXML files into visual representations that both humans and AI can analyze together.
+
+Why this matters:
+
+- **AI doesn't natively "speak" MusicXML** (yet - that's the ultimate goal!)
+- **Visual representations reveal structure** - harmonic motion, orchestration choices, form, texture
+- **Shared visual language** enables human-AI collaboration on musical analysis and composition
+
+This tool is designed for composers, arrangers, educators, and anyone exploring human-AI collaboration in music.
+
+## Quick Start
+```bash
+# Install
+pip install musicxml-to-png
+
+# Use
+musicxml-to-png your-score.mxl
+```
+
+See [Installation](#installation) for development setup.
+
 ## Purpose
 
 Convert MusicXML files into clean, analyzable PNG visualizations showing:
 
-- Temporal flow (horizontal axis = time)
-- Pitch range (vertical axis = low to high)
-- Note duration (length of visual bars)
-- Instrument families (color-coded by ensemble type)
+- **Temporal flow** (horizontal axis = time)
+- **Pitch range** (vertical axis = low to high)
+- **Note duration** (length of visual bars)
+- **Instrument** families (color-coded by ensemble type)
 
-## Requirements
+## Use Cases
 
-- Python 3.12 (specified in `.python-version` - works with pyenv, asdf, direnv, etc.)
+**For human-AI collaboration:**
 
-## Python Version Management
+- Analyze orchestration patterns with AI assistance
+- Compare multiple arrangements visually
+- Identify voice leading and harmonic motion
+- Explore how instrument families interact over time
 
-This project uses Python 3.12, specified in the `.python-version` file. If you're using **pyenv**:
+**For AI systems & automation:**
 
-1. Install Python 3.12 (if not already installed):
-   ```bash
-   pyenv install 3.12
-   ```
+- Convert MusicXML to visual format for AI analysis - AI systems can use this tool in their pipelines to process uploaded scores, even without native MusicXML support
+- Enable AI agents to "see" musical structure and provide insights
+- Automate batch analysis of large score collections
+- Generate visual comparisons across multiple compositions
 
-2. The `.python-version` file will automatically tell pyenv to use Python 3.12 when you're in this directory. Verify it's working:
-   ```bash
-   python --version  # Should show Python 3.12.x
-   ```
+**For composers & arrangers:**
 
-3. If automatic detection doesn't work, manually set it:
-   ```bash
-   pyenv local 3.12
-   ```
+- Quick visual overview of complex scores
+- Identify dense vs. sparse sections
+- Check instrument balance and register distribution
+- Export visualizations for presentations or teaching
 
-**Other version managers:** The `.python-version` file also works with `asdf`, `direnv`, and other tools that support this standard.
+**For educators:**
+
+Teach orchestration principles visually
+Compare different composers' approaches
+Analyze form and structure at a glance
+
+## Features
+
+- Parse MusicXML files (.xml, .musicxml, .mxl)
+- Extract note events (pitch, duration, start time, instrument)
+- High-resolution 2D visualization (time × pitch) with fine-grained grid
+- Multiple ensemble types:
+  - Orchestra: strings, winds, brass, percussion
+  - Bigband: trumpets, trombones, saxophones, rhythm section
+  - (More ensemble types coming - jazz combo, chamber, etc.)
+- Color-coded instrument families (distinct palettes per ensemble)
+- Customizable visualization:
+  - Grid lines (enabled by default, disable with --no-grid)
+  - Minimal mode (remove all labels, legend, title, borders)
+  - Custom titles
+  - Verbose mode for debugging (-v/--verbose)
+- Export as high-resolution PNG (300 DPI)
+
+## Python Setup
+
+This project requires **Python 3.12**. The `.python-version` file will automatically set this if you use `pyenv`, `asdf`, or similar version managers.
+
+Using pyenv:
+
+```bash
+pyenv install 3.12  # If not already installed
+python --version    # Verify it shows Python 3.12.x
+```
 
 ## Installation
 
@@ -42,29 +99,20 @@ This project uses Python 3.12, specified in the `.python-version` file. If you'r
    cd musicxml-to-png
    ```
 
-2. Create and activate a virtual environment:
+2. Set up Python environment:
    ```bash
-   # Create virtual environment
+   # Create and activate virtual environment
    python -m venv venv
-   
-   # Activate virtual environment
-   # On macOS/Linux:
-   source venv/bin/activate
-   # On Windows:
-   # venv\Scripts\activate
-   ```
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-3. Install dependencies:
-   ```bash
+   # Install dependencies
    pip install -r requirements.txt
-   ```
 
-4. Install the package in development mode:
-   ```bash
+   # Install package in development mode
    pip install -e .
    ```
 
-**Note:** Remember to activate the virtual environment (`source venv/bin/activate`) each time you work on the project. You'll see `(venv)` in your terminal prompt when it's active.
+**Note:** Activate the virtual environment (source venv/bin/activate) each time you work on the project. You'll see (venv) in your prompt when active.
 
 ## Usage
 
@@ -155,26 +203,40 @@ output_path = convert_musicxml_to_png(
 - music21 library (for MusicXML parsing)
 - matplotlib (for PNG generation)
 
-## Features
+## Roadmap
 
-- Parse MusicXML files (`.xml`, `.musicxml`, `.mxl`)
-- Extract note events (pitch, duration, start time, instrument)
-- High-resolution 2D visualization (time × pitch) with fine-grained grid
-- Multiple ensemble types:
-  - **Orchestra**: strings, winds, brass, percussion
-  - **Bigband**: trumpets, trombones, saxophones, rhythm section
-- Color-coded instrument families (distinct palettes per ensemble)
-- Customizable visualization:
-  - Grid lines (enabled by default, disable with `--no-grid`)
-  - Minimal mode (remove all labels, legend, title, borders)
-  - Custom titles
-  - Verbose mode for debugging (`-v`/`--verbose`)
-- Export as high-resolution PNG (300 DPI)
+**Current:**
 
-## Future Features
+- ✅ Orchestra and bigband ensemble modes
+- ✅ Minimal and grid visualization options
+- ✅ High-resolution PNG export (300 DPI)
+
+**Near-term:**
 
 - Auto-detection of ensemble type
+- Additional ensemble types (jazz combo, chamber, wind ensemble)
 - Opacity for dynamics
 - Articulation markers
-- Configurable color schemes
-- Additional ensemble types (jazz combo, chamber, etc.)
+
+**Long-term vision:**
+
+- AI systems that natively "speak" MusicXML - the ultimate goal
+- Animation showing temporal unfolding
+- Integration with compositional AI tools
+- Configurable color schemes and visual styles
+- Integration with apps to display music visually
+
+## Contributing
+
+This project emerged from human-AI collaborative exploration of musical structure. Contributions, ideas, and feedback are welcome!
+
+**Philosophy:** This tool exists to enable human-AI collaboration, not to replace human musical intuition. The goal is to create shared visual language that helps both humans and AI systems understand musical architecture more deeply.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+Built through collaborative iteration between human musical expertise and AI technical assistance. Created to bridge the gap between MusicXML (machine-readable but visually dense) and visual analysis (human-friendly and AI-parseable).
+
+Special thanks to: The music21 project for their excellent MusicXML parsing library.
