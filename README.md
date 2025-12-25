@@ -80,6 +80,25 @@ Analyze form and structure at a glance
   - Verbose mode for debugging (-v/--verbose)
 - Export as high-resolution PNG (300 DPI)
 
+## Getting Your Music into MusicXML
+
+Most modern notation software can export to MusicXML format. Here are some popular options:
+
+**Desktop Software:**
+- **[Dorico](https://www.steinberg.net/dorico/)** - File → Export → MusicXML (or use compressed .mxl format)
+- **[Finale](https://www.finalemusic.com/)** - File → Export → MusicXML
+- **[LilyPond](https://lilypond.org/)** - Can export via `lilypond --formats=xml`
+- **[MuseScore](https://musescore.org/)** (Free, open source) - File → Export → MusicXML
+- **[Notion](https://www.presonus.com/products/Notion)** - File → Export → MusicXML
+- **[Overture](https://sonicscores.com/overture/)** - File → Export → MusicXML
+- **[Sibelius](https://www.avid.com/sibelius)** - File → Export → MusicXML
+
+**Web-Based:**
+- **[Flat.io](https://flat.io/)** - File → Export → MusicXML
+- **[Noteflight](https://www.noteflight.com/)** - File → Export → MusicXML
+
+For detailed export instructions, please refer to your notation software's documentation. Most software supports both uncompressed `.mxl` and compressed `.xml` formats - this tool handles both!
+
 ## Python Setup
 
 This project requires **Python 3.12**. The `.python-version` file will automatically set this if you use `pyenv`, `asdf`, or similar version managers.
