@@ -2,7 +2,10 @@
 
 import argparse
 import sys
+import warnings
 from pathlib import Path
+
+from music21.musicxml.xmlToM21 import MusicXMLWarning
 
 from musicxml_to_png.converter import convert_musicxml_to_png
 from musicxml_to_png.instruments import ENSEMBLE_ORCHESTRA, ENSEMBLE_BIGBAND
@@ -21,6 +24,7 @@ Examples:
   %(prog)s input.xml --no-grid
   %(prog)s input.xml --minimal
   %(prog)s input.xml --ensemble bigband
+  %(prog)s input.xml --verbose
         """,
     )
     
@@ -66,7 +70,22 @@ Examples:
         help=f"Ensemble type for instrument categorization (default: {ENSEMBLE_ORCHESTRA})",
     )
     
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Show music21 warnings and other diagnostic information",
+    )
+    
     args = parser.parse_args()
+    
+    # Configure warning display based on verbose mode
+    if args.verbose:
+        # In verbose mode, ensure warnings are shown
+        warnings.filterwarnings('always', category=MusicXMLWarning)
+    else:
+        # In quiet mode (default), suppress music21 warnings
+        warnings.filterwarnings('ignore', category=MusicXMLWarning)
     
     # Convert input path to Path object
     input_path = Path(args.input)
