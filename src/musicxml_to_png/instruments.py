@@ -447,10 +447,20 @@ def get_instrument_family(
     # Fall back to instrument name matching
     if instrument_name:
         name_lower = instrument_name.lower()
+        # Collect all (keyword, family) pairs and sort by keyword length (longest first)
+        # This ensures more specific keywords (e.g., "bassoon") match before generic ones (e.g., "bass")
+        # across all families, preventing "bass" from matching "bassoon" before "bassoon" is checked
+        keyword_family_pairs = []
         for family, keywords in name_keywords.items():
             for keyword in keywords:
-                if keyword in name_lower:
-                    return family
+                keyword_family_pairs.append((keyword, family))
+        
+        # Sort by keyword length (longest first) to prioritize specific matches
+        keyword_family_pairs.sort(key=lambda x: len(x[0]), reverse=True)
+        
+        for keyword, family in keyword_family_pairs:
+            if keyword in name_lower:
+                return family
     
     return unknown_family
 

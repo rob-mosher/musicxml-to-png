@@ -7,9 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Comprehensive test suite using pytest:
+  - Unit tests for instrument classification (orchestra and bigband ensembles)
+  - Unit tests for note extraction and visualization generation
+  - CLI interface tests
+  - Integration tests with real MusicXML files
+  - Test fixtures and configuration
+
 ### Changed
 
 - Added hero screenshot to README showcasing example visualization output
+- Improved instrument name matching to prioritize longer, more specific keywords (e.g., "bassoon" before "bass")
 
 ## [0.1.0] - 2025-12-25
 
