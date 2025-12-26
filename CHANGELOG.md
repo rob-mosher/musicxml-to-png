@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-12-25
+
 ### Added
 
 - Comprehensive test suite using pytest:
@@ -55,5 +57,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Virtual environment setup and dependency management
 - MIT License
 
+[0.2.0]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.2.0
 [0.1.0]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.1.0
 
