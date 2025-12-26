@@ -25,6 +25,10 @@ pip install musicxml-to-png
 
 # Use
 musicxml-to-png your-score.mxl
+musicxml-to-png your-score.mxl --ensemble bigband
+musicxml-to-png your-score.mxl --ensemble orchestra
+musicxml-to-png your-score.mxl --ensemble orchestra --minimal
+musicxml-to-png your-score.mxl --ensemble orchestra --no-grid -o my-score.png -v
 ```
 
 See [Installation](#installation) for development setup.
