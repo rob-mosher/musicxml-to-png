@@ -3,7 +3,7 @@
 A tool for human-AI musical collaboration
 
 <div align="center">
-  <img src="docs/images/screenshot.png" alt="Example visualization showing MusicXML converted to PNG" width="100%" style="max-width: 1200px;">
+  <img src="https://raw.githubusercontent.com/rob-mosher/musicxml-to-png/v0.2.1/docs/images/screenshot.png" alt="Example visualization showing MusicXML converted to PNG" width="100%" style="max-width: 1200px;">
 </div>
 
 ## Vision

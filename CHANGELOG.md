@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Updated README image URL to use version-specific GitHub tag for PyPI compatibility
+
 ## [0.2.0] - 2025-12-25
 
 ### Added
