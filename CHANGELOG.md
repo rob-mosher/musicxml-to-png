@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2025-12-26
+
 ### Changed
 
 - Simplified README by removing redundancy and condensing verbose sections:
@@ -77,6 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Virtual environment setup and dependency management
 - MIT License
 
+[0.2.2]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.2.2
 [0.2.1]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.2.1
 [0.2.0]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.2.0
 [0.1.0]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.1.0
