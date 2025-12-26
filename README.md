@@ -6,72 +6,30 @@ A tool for human-AI musical collaboration
   <img src="https://raw.githubusercontent.com/rob-mosher/musicxml-to-png/v0.2.1/docs/images/screenshot.png" alt="Example visualization showing MusicXML converted to PNG" width="100%" style="max-width: 1200px;">
 </div>
 
-## Vision
-
-MusicXML is rich and expressive for human-facing notation software, but challenging for AI systems to "see" structurally. This tool bridges that gap by converting MusicXML files into visual representations that both humans and AI can analyze together.
-
-Why this matters:
-
-- **AI doesn't natively "speak" MusicXML** (yet - that's the ultimate goal!)
-- **Visual representations reveal structure** - harmonic motion, orchestration choices, form, texture
-- **Shared visual language** enables human-AI collaboration on musical analysis and composition
-
-This tool is designed for composers, arrangers, educators, and anyone exploring human-AI collaboration in music.
+MusicXML is rich and expressive for human-facing notation software, but challenging for AI systems to "see" structurally. This tool bridges that gap by converting MusicXML files into visual representations that both humans and AI can analyze together. Designed for composers, arrangers, educators, and anyone exploring human-AI collaboration in music.
 
 ## Quick Start
+
+**Requirements:** Python 3.12 or higher
+
 ```bash
-# Install
+# Install from PyPI
 pip install musicxml-to-png
 
-# Use
+# Convert a MusicXML file
 musicxml-to-png your-score.mxl
-musicxml-to-png your-score.mxl --ensemble bigband
-musicxml-to-png your-score.mxl --ensemble orchestra
-musicxml-to-png your-score.mxl --ensemble orchestra --minimal
-musicxml-to-png your-score.mxl --ensemble orchestra --no-grid -o my-score.png -v
+
+# With options
+musicxml-to-png your-score.mxl --ensemble bigband --minimal -o output.png
 ```
 
 See [Installation](#installation) for development setup.
 
-## Purpose
-
-Convert MusicXML files into clean, analyzable PNG visualizations showing:
-
-- **Temporal flow** (horizontal axis = time)
-- **Pitch range** (vertical axis = low to high)
-- **Note duration** (length of visual bars)
-- **Instrument families** (color-coded by ensemble type)
-
-## Use Cases
-
-**For human-AI collaboration:**
-
-- Analyze orchestration patterns with AI assistance
-- Compare multiple arrangements visually
-- Identify voice leading and harmonic motion
-- Explore how instrument families interact over time
-
-**For AI systems & automation:**
-
-- Convert MusicXML to visual format for AI analysis - AI systems can use this tool in their pipelines to process uploaded scores, even without native MusicXML support
-- Enable AI agents to "see" musical structure and provide insights
-- Automate batch analysis of large score collections
-- Generate visual comparisons across multiple compositions
-
-**For composers & arrangers:**
-
-- Quick visual overview of complex scores
-- Identify dense vs. sparse sections
-- Check instrument balance and register distribution
-- Export visualizations for presentations or teaching
-
-**For educators:**
-
-- Teach orchestration principles visually
-- Compare different composers' approaches
-- Analyze form and structure at a glance
-
 ## Features
+
+Convert MusicXML files into clean, analyzable PNG visualizations showing temporal flow (horizontal axis = time), pitch range (vertical axis = low to high), note duration (length of visual bars), and instrument families (color-coded by ensemble type).
+
+**Use cases:** Human-AI collaboration on musical analysis, visual comparison of arrangements, AI pipeline integration for score processing, and educational visualization of orchestration principles.
 
 - Parse MusicXML files (.xml, .musicxml, .mxl)
 - Extract note events (pitch, duration, start time, instrument)
@@ -107,26 +65,37 @@ Most modern notation software can export to MusicXML format. Here are some popul
 
 For detailed export instructions, please refer to your notation software's documentation. Most software supports both uncompressed `.mxl` and compressed `.xml` formats - this tool handles both!
 
-## Python Setup
-
-This project requires **Python 3.12**. The `.python-version` file will automatically set this if you use `pyenv`, `asdf`, or similar version managers.
-
-Using pyenv:
-
-```bash
-pyenv install 3.12  # If not already installed
-python --version    # Verify it shows Python 3.12.x
-```
-
 ## Installation
 
-1. Clone the repository:
+### For End Users
+
+Simply install from PyPI:
+
+```bash
+pip install musicxml-to-png
+```
+
+**Note:** Requires Python 3.12 or higher. If you don't have Python 3.12, `pip` will show an error with installation instructions.
+
+### For Developers
+
+If you want to contribute or develop locally:
+
+1. **Python Version:** This project requires Python 3.12. The `.python-version` file will automatically set this if you use `pyenv`, `asdf`, or similar version managers.
+
+   Using pyenv:
+   ```bash
+   pyenv install 3.12  # If not already installed
+   python --version    # Verify it shows Python 3.12.x
+   ```
+
+2. **Clone the repository:**
    ```bash
    git clone <repository-url>
    cd musicxml-to-png
    ```
 
-2. Set up Python environment:
+3. **Set up Python environment:**
    ```bash
    # Create and activate virtual environment
    python -m venv venv
@@ -139,7 +108,7 @@ python --version    # Verify it shows Python 3.12.x
    pip install -e .
    ```
 
-**Note:** Activate the virtual environment (source venv/bin/activate) each time you work on the project. You'll see (venv) in your prompt when active.
+**Note:** Activate the virtual environment (`source venv/bin/activate`) each time you work on the project. You'll see `(venv)` in your prompt when active.
 
 ## Usage
 
@@ -148,7 +117,7 @@ python --version    # Verify it shows Python 3.12.x
 Convert a MusicXML file to PNG:
 
 ```bash
-python -m musicxml_to_png input.xml
+musicxml-to-png input.xml
 ```
 
 This creates `input.png` in the same directory. Supports both `.xml` and `.mxl` (compressed) MusicXML files.
@@ -157,21 +126,21 @@ This creates `input.png` in the same directory. Supports both `.xml` and `.mxl` 
 
 ```bash
 # Specify custom output file
-python -m musicxml_to_png input.xml -o output.png
+musicxml-to-png input.xml -o output.png
 
 # Add custom title
-python -m musicxml_to_png input.xml --title "My Composition"
+musicxml-to-png input.xml --title "My Composition"
 
 # Disable grid lines
-python -m musicxml_to_png input.xml --no-grid
+musicxml-to-png input.xml --no-grid
 
 # Minimal mode (no labels, legend, title, or borders)
-python -m musicxml_to_png input.xml --minimal
+musicxml-to-png input.xml --minimal
 
 # Show music21 warnings and diagnostics
-python -m musicxml_to_png input.xml --verbose
+musicxml-to-png input.xml --verbose
 # or
-python -m musicxml_to_png input.xml -v
+musicxml-to-png input.xml -v
 ```
 
 **Ensemble Types:**
@@ -180,22 +149,16 @@ Select the instrument categorization scheme:
 
 ```bash
 # Orchestra (default) - strings, winds, brass, percussion
-python -m musicxml_to_png input.xml
+musicxml-to-png input.xml
 
 # Bigband - trumpets, trombones, saxophones, rhythm section
-python -m musicxml_to_png input.xml --ensemble bigband
+musicxml-to-png input.xml --ensemble bigband
 ```
 
 **Combining Options:**
 
 ```bash
-python -m musicxml_to_png input.xml --ensemble bigband --minimal --no-grid -o output.png
-```
-
-After installation, you can also use the `musicxml-to-png` command directly:
-
-```bash
-musicxml-to-png input.xml -o output.png
+musicxml-to-png input.xml --ensemble bigband --minimal --no-grid -o output.png
 ```
 
 ### Python Library
@@ -224,36 +187,9 @@ output_path = convert_musicxml_to_png(
 )
 ```
 
-## Tech Stack
-
-- Python (for MusicXML parsing and image generation)
-- music21 library (for MusicXML parsing)
-- matplotlib (for PNG generation)
-
-## Roadmap
-
-**Current:**
-
-- ✅ Orchestra and bigband ensemble modes
-- ✅ Minimal and grid visualization options
-- ✅ High-resolution PNG export (300 DPI)
-
-**Near-term:**
-
-- Auto-detection of ensemble type
-- Additional ensemble types (jazz combo, chamber, wind ensemble)
-- Opacity for dynamics
-- Articulation markers
-
-**Long-term vision:**
-
-- AI systems that natively "speak" MusicXML - the ultimate goal
-- Animation showing temporal unfolding
-- Integration with compositional AI tools
-- Configurable color schemes and visual styles
-- Integration with apps to display music visually
-
 ## Contributing
+
+See [Roadmap](docs/roadmap.md) for planned features.
 
 This project emerged from human-AI collaborative exploration of musical structure. Contributions, ideas, and feedback are welcome!
 

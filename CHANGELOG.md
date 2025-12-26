@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Simplified README by removing redundancy and condensing verbose sections:
+  - Merged Vision section into brief intro paragraph
+  - Reduced Quick Start examples from 5 to 2
+  - Merged Purpose into Features section header
+  - Condensed Use Cases from 4 subsections to single sentence
+  - Consolidated Usage section to emphasize command form (removed python -m examples)
+  - Removed Tech Stack section
+  - Moved Roadmap to docs/roadmap.md
+  - Reduced README from ~283 to ~205 lines while maintaining all essential information
 - Enhanced Quick Start section with practical usage examples showing ensemble selection and option combinations
 - Correct minor formatting issues in README
 
