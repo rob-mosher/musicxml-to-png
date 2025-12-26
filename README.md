@@ -2,6 +2,10 @@
 
 A tool for human-AI musical collaboration
 
+<div align="center">
+  <img src="docs/images/screenshot.png" alt="Example visualization showing MusicXML converted to PNG" width="100%" style="max-width: 1200px;">
+</div>
+
 ## Vision
 
 MusicXML is rich and expressive for human-facing notation software, but challenging for AI systems to "see" structurally. This tool bridges that gap by converting MusicXML files into visual representations that both humans and AI can analyze together.
