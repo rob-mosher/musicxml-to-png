@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Enhanced Quick Start section with practical usage examples showing ensemble selection and option combinations
+- Correct minor formatting issues in README
 
 ## [0.2.1] - 2025-12-26
 

@@ -40,7 +40,7 @@ Convert MusicXML files into clean, analyzable PNG visualizations showing:
 - **Temporal flow** (horizontal axis = time)
 - **Pitch range** (vertical axis = low to high)
 - **Note duration** (length of visual bars)
-- **Instrument** families (color-coded by ensemble type)
+- **Instrument families** (color-coded by ensemble type)
 
 ## Use Cases
 
@@ -67,9 +67,9 @@ Convert MusicXML files into clean, analyzable PNG visualizations showing:
 
 **For educators:**
 
-Teach orchestration principles visually
-Compare different composers' approaches
-Analyze form and structure at a glance
+- Teach orchestration principles visually
+- Compare different composers' approaches
+- Analyze form and structure at a glance
 
 ## Features
 
@@ -266,4 +266,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 Built through collaborative iteration between human musical expertise and AI technical assistance. Created to bridge the gap between MusicXML (machine-readable but visually dense) and visual analysis (human-friendly and AI-parseable).
 
-Special thanks to: The music21 project for their excellent MusicXML parsing library.
+**Special thanks to:** The music21 project for their excellent MusicXML parsing library.
