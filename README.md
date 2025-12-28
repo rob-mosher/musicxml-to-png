@@ -3,7 +3,7 @@
 A tool for human-AI musical collaboration
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/rob-mosher/musicxml-to-png/v0.2.3/docs/images/screenshot.png" alt="Example visualization showing MusicXML converted to PNG" width="100%" style="max-width: 1200px;">
+  <img src="https://raw.githubusercontent.com/rob-mosher/musicxml-to-png/v0.3.0/docs/images/screenshot.png" alt="Example visualization showing MusicXML converted to PNG" width="100%" style="max-width: 1200px;">
 </div>
 
 MusicXML is rich and expressive for human-facing notation software, but challenging for AI systems to "see" structurally. This tool bridges that gap by converting MusicXML files into visual representations that both humans and AI can analyze together. Designed for composers, arrangers, educators, and anyone exploring human-AI collaboration in music.
@@ -193,7 +193,7 @@ output_path = convert_musicxml_to_png(
 
 ## Contributing
 
-See [Roadmap](docs/roadmap.md) for planned features.
+See [Roadmap](https://raw.githubusercontent.com/rob-mosher/musicxml-to-png/v0.3.0/docs/roadmap.md) for planned features.
 
 This project emerged from human-AI collaborative exploration of musical structure. Contributions, ideas, and feedback are welcome!
 
@@ -201,7 +201,7 @@ This project emerged from human-AI collaborative exploration of musical structur
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://raw.githubusercontent.com/rob-mosher/musicxml-to-png/v0.3.0/LICENSE) file for details.
 
 ## Acknowledgments
 Built through collaborative iteration between human musical expertise and AI technical assistance. Created to bridge the gap between MusicXML (machine-readable but visually dense) and visual analysis (human-friendly and AI-parseable).

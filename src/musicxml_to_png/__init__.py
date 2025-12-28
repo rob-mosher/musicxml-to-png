@@ -1,6 +1,6 @@
 """MusicXML to PNG converter library."""
 
-__version__ = "0.2.3"
+__version__ = "0.3.0"
 
 from musicxml_to_png.converter import convert_musicxml_to_png
 

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2025-12-28
+
 ### Added
 - Visualization now reflects musical intent more richly: bar opacity responds to dynamics markings/velocities, and bar thickness scales with simultaneous same-pitch stacking (ties already merged). Added regression tests for dynamics capture and pitch overlap tagging.
 
@@ -16,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Removed redundant Homepage field from pyproject.toml, keeping only Repository since they pointed to the same URL
 
-## [0.2.3] - 2025-12-26
+## [0.2.3] - 2025-12-27
 
 ### Changed
 - Default ensemble now `ungrouped`, giving every part its own color; CLI help and docs updated accordingly
@@ -94,6 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Virtual environment setup and dependency management
 - MIT License
 
+[0.3.0]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.3.0
 [0.2.3]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.2.3
 [0.2.2]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.2.2
 [0.2.1]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.2.1
