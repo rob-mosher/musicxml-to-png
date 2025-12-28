@@ -1,11 +1,11 @@
 """Core conversion logic for MusicXML to PNG."""
 
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import Dict, List, Optional
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-from music21 import converter, stream, note, instrument, pitch, chord
+from music21 import converter, stream, note, instrument, pitch, chord, dynamics
 
 from musicxml_to_png.instruments import (
     get_instrument_family,
@@ -39,6 +39,9 @@ class NoteEvent:
         duration: float,
         instrument_family: str,
         instrument_label: Optional[str] = None,
+        dynamic_level: float = 0.6,
+        dynamic_mark: Optional[str] = None,
+        pitch_overlap: int = 1,
     ):
         self.pitch_midi = pitch_midi
         self.start_time = start_time
@@ -46,6 +49,35 @@ class NoteEvent:
         self.instrument_family = instrument_family
         # Default label to family if none is supplied (useful for per-instrument mode)
         self.instrument_label = instrument_label or instrument_family
+        # Normalized loudness derived from dynamics markings or velocity
+        self.dynamic_level = dynamic_level
+        # Raw dynamic marking (e.g., mf, f) when available
+        self.dynamic_mark = dynamic_mark
+        # Count of simultaneous notes at the same pitch (1 = solo)
+        self.pitch_overlap = pitch_overlap
+
+
+# Approximated loudness values for common dynamics, clamped to a sane range
+DYNAMIC_MARK_LEVELS: Dict[str, float] = {
+    "ppp": 0.2,
+    "pp": 0.3,
+    "p": 0.4,
+    "mp": 0.55,
+    "mf": 0.7,
+    "f": 0.85,
+    "ff": 1.0,
+    "fff": 1.15,
+    "sfz": 1.05,
+    "sffz": 1.1,
+    "fp": 0.65,
+}
+MIN_DYNAMIC_LEVEL = 0.2
+MAX_DYNAMIC_LEVEL = 1.2
+DEFAULT_DYNAMIC_LEVEL = 0.6
+
+
+def _clamp_dynamic_level(level: float) -> float:
+    return max(MIN_DYNAMIC_LEVEL, min(MAX_DYNAMIC_LEVEL, level))
 
 
 def extract_notes(score: stream.Score, ensemble: str = ENSEMBLE_UNGROUPED) -> List[NoteEvent]:
@@ -148,6 +180,43 @@ def extract_notes(score: stream.Score, ensemble: str = ENSEMBLE_UNGROUPED) -> Li
         # Second pass: merge tied notes
         # Track which notes have been processed as part of a tie
         processed_indices = set()
+
+        # Build a simple dynamic timeline for this part so we can grab the most recent marking
+        dynamic_timeline = []
+        for dyn in part.recurse().getElementsByClass(dynamics.Dynamic):
+            dyn_offset = float(dyn.getOffsetInHierarchy(score))
+            dyn_mark = None
+            if hasattr(dyn, "value") and dyn.value is not None:
+                dyn_mark = str(dyn.value).lower()
+            level = DYNAMIC_MARK_LEVELS.get(dyn_mark, DEFAULT_DYNAMIC_LEVEL)
+            dynamic_timeline.append((dyn_offset, level, dyn_mark))
+        dynamic_timeline.sort(key=lambda item: item[0])
+
+        def get_dynamic_at(offset: float, element) -> tuple[float, Optional[str]]:
+            """Return (level, mark) for a given absolute offset."""
+            level = None
+            mark = None
+            for dyn_offset, dyn_level, dyn_mark in reversed(dynamic_timeline):
+                if dyn_offset <= offset:
+                    level = dyn_level
+                    mark = dyn_mark
+                    break
+            if level is None:
+                level = DEFAULT_DYNAMIC_LEVEL
+
+            velocity_level = None
+            volume = getattr(element, "volume", None)
+            if volume:
+                if volume.velocity is not None:
+                    vel_norm = max(0.0, min(1.0, volume.velocity / 127.0))
+                    velocity_level = MIN_DYNAMIC_LEVEL + vel_norm * (MAX_DYNAMIC_LEVEL - MIN_DYNAMIC_LEVEL)
+                elif volume.velocityScalar is not None:
+                    vel_norm = max(0.0, min(1.0, float(volume.velocityScalar)))
+                    velocity_level = MIN_DYNAMIC_LEVEL + vel_norm * (MAX_DYNAMIC_LEVEL - MIN_DYNAMIC_LEVEL)
+            if velocity_level is not None:
+                level = max(level, velocity_level)
+
+            return _clamp_dynamic_level(level), mark
         
         for i, (pitch_midi, offset, duration, tie_type, element) in enumerate(note_data):
             if i in processed_indices:
@@ -156,6 +225,7 @@ def extract_notes(score: stream.Score, ensemble: str = ENSEMBLE_UNGROUPED) -> Li
             # If this note starts a tie, find all connected tied notes
             if tie_type == 'start':
                 total_duration = duration
+                dynamic_level, dynamic_mark = get_dynamic_at(offset, element)
                 
                 # Find the tie stop note (same pitch, later offset)
                 for j, (other_pitch, other_offset, other_duration, other_tie_type, _) in enumerate(note_data[i+1:], start=i+1):
@@ -182,6 +252,8 @@ def extract_notes(score: stream.Score, ensemble: str = ENSEMBLE_UNGROUPED) -> Li
                         duration=total_duration,
                         instrument_family=instrument_family,
                         instrument_label=instrument_label,
+                        dynamic_level=dynamic_level,
+                        dynamic_mark=dynamic_mark,
                     )
                 )
                 processed_indices.add(i)
@@ -191,6 +263,7 @@ def extract_notes(score: stream.Score, ensemble: str = ENSEMBLE_UNGROUPED) -> Li
                 # If not, it's an orphaned stop (no matching start found earlier)
                 # In valid MusicXML this shouldn't happen, but handle gracefully
                 if i not in processed_indices:
+                    dynamic_level, dynamic_mark = get_dynamic_at(offset, element)
                     # Orphaned stop - treat as regular note (defensive programming)
                     note_events.append(
                         NoteEvent(
@@ -199,10 +272,13 @@ def extract_notes(score: stream.Score, ensemble: str = ENSEMBLE_UNGROUPED) -> Li
                             duration=duration,
                             instrument_family=instrument_family,
                             instrument_label=instrument_label,
+                            dynamic_level=dynamic_level,
+                            dynamic_mark=dynamic_mark,
                         )
                     )
                     processed_indices.add(i)
             else:
+                dynamic_level, dynamic_mark = get_dynamic_at(offset, element)
                 # No tie - create NoteEvent as normal
                 note_events.append(
                     NoteEvent(
@@ -211,10 +287,39 @@ def extract_notes(score: stream.Score, ensemble: str = ENSEMBLE_UNGROUPED) -> Li
                         duration=duration,
                         instrument_family=instrument_family,
                         instrument_label=instrument_label,
+                        dynamic_level=dynamic_level,
+                        dynamic_mark=dynamic_mark,
                     )
                 )
                 processed_indices.add(i)
-    
+
+    # Annotate overlapping notes at the same pitch so we can visualize stacking
+    overlap_counts = [1] * len(note_events)
+    events_by_pitch: Dict[float, List[tuple[int, NoteEvent]]] = {}
+    for idx, event in enumerate(note_events):
+        events_by_pitch.setdefault(event.pitch_midi, []).append((idx, event))
+
+    for events in events_by_pitch.values():
+        events.sort(key=lambda item: (item[1].start_time, item[0]))
+        active: List[tuple[int, float]] = []  # (index, end_time)
+        for idx, event in events:
+            current_start = event.start_time
+            current_end = event.start_time + event.duration
+            active = [(i, end) for i, end in active if end > current_start]
+            current_overlap = len(active) + 1
+            overlap_counts[idx] = max(overlap_counts[idx], current_overlap)
+
+            # Existing active notes now overlap with this one; bump their counts
+            updated_active: List[tuple[int, float]] = []
+            for active_idx, end_time in active:
+                overlap_counts[active_idx] = max(overlap_counts[active_idx], current_overlap)
+                updated_active.append((active_idx, end_time))
+            updated_active.append((idx, current_end))
+            active = updated_active
+
+    for idx, event in enumerate(note_events):
+        event.pitch_overlap = overlap_counts[idx]
+
     return note_events
 
 
@@ -287,21 +392,31 @@ def create_visualization(
         families_present = set(event.instrument_family for event in note_events)
     
     # Create horizontal bars for each note
-    # Use smaller height for better granularity
-    bar_height = max(0.3, min(0.8, 1.0 / max(1, pitch_range / 20)))
+    # Use smaller height for better granularity; widen when multiple notes share a pitch
+    base_bar_height = max(0.3, min(0.8, 1.0 / max(1, pitch_range / 20)))
     
     for event in note_events:
         if not family_mode:
             color = color_map[event.instrument_label]
         else:
             color = get_family_color(event.instrument_family, ensemble=ensemble)
+
+        overlap_scale = 1 + (event.pitch_overlap - 1) * 0.35
+        overlap_scale = min(overlap_scale, 3.0)
+        bar_height = base_bar_height * overlap_scale
+
+        dynamic_range = MAX_DYNAMIC_LEVEL - MIN_DYNAMIC_LEVEL
+        normalized_dynamic = 0.0 if dynamic_range == 0 else (event.dynamic_level - MIN_DYNAMIC_LEVEL) / dynamic_range
+        normalized_dynamic = max(0.0, min(1.0, normalized_dynamic))
+        alpha = min(0.95, 0.35 + 0.45 * normalized_dynamic)
+
         ax.barh(
             event.pitch_midi,
             event.duration,
             left=event.start_time,
             height=bar_height,
             color=color,
-            alpha=0.7,
+            alpha=alpha,
             edgecolor="black",
             linewidth=0.3,
         )
@@ -402,6 +517,13 @@ def create_visualization(
     
     # Show legend only if not in minimal mode
     if legend_elements and not minimal:
+        legend_elements.append(
+            mpatches.Patch(
+                facecolor="none",
+                edgecolor="none",
+                label="Width = stacked pitches; Opacity = dynamics",
+            )
+        )
         ax.legend(handles=legend_elements, loc="upper right", fontsize=10)
     
     # Add grid: major grid at whole beats, minor grid at smallest duration

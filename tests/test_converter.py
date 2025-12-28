@@ -4,13 +4,16 @@ from pathlib import Path
 import tempfile
 
 import pytest
-from music21 import stream, note, instrument, chord, pitch, tie
+from music21 import stream, note, instrument, chord, pitch, tie, dynamics
 
 from musicxml_to_png.converter import (
     extract_notes,
     create_visualization,
     convert_musicxml_to_png,
     NoteEvent,
+    DEFAULT_DYNAMIC_LEVEL,
+    MIN_DYNAMIC_LEVEL,
+    MAX_DYNAMIC_LEVEL,
 )
 from musicxml_to_png.instruments import (
     ENSEMBLE_UNGROUPED,
@@ -350,6 +353,61 @@ class TestExtractNotes:
         for event in note_events:
             assert event.start_time == 0.0
             assert event.duration == 2.0  # Combined duration
+
+    def test_dynamic_markings_and_velocity(self):
+        """Dynamics markings set baseline level; velocity can raise it."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Violin())
+        part.insert(0.0, dynamics.Dynamic("mf"))
+
+        n1 = note.Note("C4")
+        n1.quarterLength = 1.0
+        part.append(n1)
+
+        part.insert(1.0, dynamics.Dynamic("ff"))
+        n2 = note.Note("D4")
+        n2.quarterLength = 1.0
+        # Velocity should push above the default if higher than the marking
+        n2.volume.velocity = 110
+        part.append(n2)
+
+        score.append(part)
+
+        note_events = extract_notes(score, ensemble=ENSEMBLE_ORCHESTRA)
+        assert len(note_events) == 2
+
+        # First note picks up mf marking
+        assert note_events[0].dynamic_mark == "mf"
+        assert note_events[0].dynamic_level == 0.7
+
+        # Second note picks up ff marking and velocity lift
+        assert note_events[1].dynamic_mark == "ff"
+        expected_velocity_level = MIN_DYNAMIC_LEVEL + (110 / 127.0) * (MAX_DYNAMIC_LEVEL - MIN_DYNAMIC_LEVEL)
+        assert note_events[1].dynamic_level >= expected_velocity_level
+        assert note_events[1].dynamic_level <= MAX_DYNAMIC_LEVEL
+
+    def test_pitch_overlap_counts_shared_pitches(self):
+        """Overlapping notes on the same pitch are marked as stacked."""
+        score = stream.Score()
+
+        part1 = stream.Part()
+        part1.append(instrument.Flute())
+        n1 = note.Note("C4")
+        n1.quarterLength = 2.0
+        part1.append(n1)
+        score.insert(0, part1)
+
+        part2 = stream.Part()
+        part2.append(instrument.Clarinet())
+        n2 = note.Note("C4")
+        n2.quarterLength = 1.0
+        part2.append(n2)
+        score.insert(0, part2)
+
+        note_events = extract_notes(score, ensemble=ENSEMBLE_ORCHESTRA)
+        assert len(note_events) == 2
+        assert all(event.pitch_overlap == 2 for event in note_events)
 
 
 class TestCreateVisualization:

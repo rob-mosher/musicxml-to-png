@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Visualization now reflects musical intent more richly: bar opacity responds to dynamics markings/velocities, and bar thickness scales with simultaneous same-pitch stacking (ties already merged). Added regression tests for dynamics capture and pitch overlap tagging.
+
 ### Fixed
 - Fixed tie handling bug where tied notes over barlines were incorrectly visualized as separate note attacks instead of continuous notes. Tied notes are now properly merged into single NoteEvent objects with combined durations.
 
