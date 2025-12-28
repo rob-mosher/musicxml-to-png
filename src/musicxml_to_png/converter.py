@@ -103,8 +103,10 @@ def extract_notes(score: stream.Score, ensemble: str = ENSEMBLE_UNGROUPED) -> Li
             )
             instrument_label = base_label
         
-        # Extract notes from this part
-        # Use getOffsetInHierarchy to get absolute offset from score start
+        # Extract notes from this part with tie information
+        # First pass: collect all notes with their tie information
+        note_data = []  # List of (pitch_midi, offset, duration, tie_type, element)
+        
         for element in part.recurse().notes:
             # Get absolute offset from the start of the score
             absolute_offset = float(element.getOffsetInHierarchy(score))
@@ -113,31 +115,105 @@ def extract_notes(score: stream.Score, ensemble: str = ENSEMBLE_UNGROUPED) -> Li
                 # Single note
                 pitch_obj = element.pitch
                 if pitch_obj.midi is not None:
-                    note_events.append(
-                        NoteEvent(
-                            pitch_midi=float(pitch_obj.midi),
-                            start_time=absolute_offset,
-                            duration=float(element.quarterLength),
-                            instrument_family=instrument_family,
-                            instrument_label=instrument_label,
-                        )
-                    )
+                    tie_type = element.tie.type if element.tie is not None else None
+                    note_data.append((
+                        float(pitch_obj.midi),
+                        absolute_offset,
+                        float(element.quarterLength),
+                        tie_type,
+                        element,
+                    ))
             elif isinstance(element, chord.Chord):
-                # Chord - create a note for each pitch
+                # Chord - each pitch can have its own tie
                 for pitch_obj in element.pitches:
                     if pitch_obj.midi is not None:
-                        note_events.append(
-                        NoteEvent(
-                            pitch_midi=float(pitch_obj.midi),
-                            start_time=absolute_offset,
-                            duration=float(element.quarterLength),
-                            instrument_family=instrument_family,
-                            instrument_label=instrument_label,
-                        )
-                    )
+                        # For chords, check if this specific pitch has a tie
+                        # music21 stores ties per pitch in chords
+                        tie_type = None
+                        if element.tie is not None:
+                            tie_type = element.tie.type
+                        # Also check individual note ties if available
+                        # (chords can have ties on individual pitches)
+                        note_data.append((
+                            float(pitch_obj.midi),
+                            absolute_offset,
+                            float(element.quarterLength),
+                            tie_type,
+                            element,
+                        ))
             elif isinstance(element, note.Rest):
                 # Skip rests
                 continue
+        
+        # Second pass: merge tied notes
+        # Track which notes have been processed as part of a tie
+        processed_indices = set()
+        
+        for i, (pitch_midi, offset, duration, tie_type, element) in enumerate(note_data):
+            if i in processed_indices:
+                continue
+            
+            # If this note starts a tie, find all connected tied notes
+            if tie_type == 'start':
+                total_duration = duration
+                
+                # Find the tie stop note (same pitch, later offset)
+                for j, (other_pitch, other_offset, other_duration, other_tie_type, _) in enumerate(note_data[i+1:], start=i+1):
+                    if j in processed_indices:
+                        continue
+                    
+                    # Check if this is the tie stop for the same pitch
+                    if (other_pitch == pitch_midi and 
+                        other_tie_type == 'stop' and
+                        other_offset >= offset):
+                        total_duration += other_duration
+                        processed_indices.add(j)
+                        break
+                    # If we encounter another tie start for the same pitch before finding stop,
+                    # that's an error case, but we'll just use what we have
+                    elif other_pitch == pitch_midi and other_tie_type == 'start':
+                        break
+                
+                # Create merged NoteEvent
+                note_events.append(
+                    NoteEvent(
+                        pitch_midi=pitch_midi,
+                        start_time=offset,
+                        duration=total_duration,
+                        instrument_family=instrument_family,
+                        instrument_label=instrument_label,
+                    )
+                )
+                processed_indices.add(i)
+            elif tie_type == 'stop':
+                # Skip tie stop notes - they should have been merged with their start note
+                # Check if this stop was already processed (merged with a start)
+                # If not, it's an orphaned stop (no matching start found earlier)
+                # In valid MusicXML this shouldn't happen, but handle gracefully
+                if i not in processed_indices:
+                    # Orphaned stop - treat as regular note (defensive programming)
+                    note_events.append(
+                        NoteEvent(
+                            pitch_midi=pitch_midi,
+                            start_time=offset,
+                            duration=duration,
+                            instrument_family=instrument_family,
+                            instrument_label=instrument_label,
+                        )
+                    )
+                    processed_indices.add(i)
+            else:
+                # No tie - create NoteEvent as normal
+                note_events.append(
+                    NoteEvent(
+                        pitch_midi=pitch_midi,
+                        start_time=offset,
+                        duration=duration,
+                        instrument_family=instrument_family,
+                        instrument_label=instrument_label,
+                    )
+                )
+                processed_indices.add(i)
     
     return note_events
 

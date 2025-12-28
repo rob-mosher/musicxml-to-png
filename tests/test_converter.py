@@ -4,7 +4,7 @@ from pathlib import Path
 import tempfile
 
 import pytest
-from music21 import stream, note, instrument, chord, pitch
+from music21 import stream, note, instrument, chord, pitch, tie
 
 from musicxml_to_png.converter import (
     extract_notes,
@@ -210,6 +210,146 @@ class TestExtractNotes:
         note_events = extract_notes(score, ensemble=ENSEMBLE_ORCHESTRA)
         assert len(note_events) == 1
         # Should fall back to unknown if no instrument info
+
+    def test_tied_notes_within_measure(self):
+        """Test that tied notes within a measure are merged into a single NoteEvent."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Flute())
+        
+        # Create two tied notes: C4 for 1 beat, then tied C4 for 1 beat
+        n1 = note.Note("C4")
+        n1.quarterLength = 1.0
+        n1.tie = tie.Tie("start")
+        part.append(n1)
+        
+        n2 = note.Note("C4")
+        n2.quarterLength = 1.0
+        n2.tie = tie.Tie("stop")
+        part.append(n2)
+        
+        score.append(part)
+        
+        note_events = extract_notes(score, ensemble=ENSEMBLE_UNGROUPED)
+        
+        # Should have only one NoteEvent for the tied C4
+        c4_events = [e for e in note_events if e.pitch_midi == 60.0]
+        assert len(c4_events) == 1
+        assert c4_events[0].start_time == 0.0
+        assert c4_events[0].duration == 2.0  # Combined duration
+
+    def test_tied_notes_over_barline(self):
+        """Test that tied notes over barlines are merged into a single NoteEvent."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Flute())
+        
+        # Create a measure with a tied note that continues into the next measure
+        m1 = stream.Measure()
+        n1 = note.Note("A4")  # MIDI 69
+        n1.quarterLength = 2.0
+        n1.tie = tie.Tie("start")
+        m1.append(n1)
+        part.append(m1)
+        
+        m2 = stream.Measure()
+        n2 = note.Note("A4")  # MIDI 69
+        n2.quarterLength = 1.0
+        n2.tie = tie.Tie("stop")
+        m2.append(n2)
+        part.append(m2)
+        
+        score.append(part)
+        
+        note_events = extract_notes(score, ensemble=ENSEMBLE_UNGROUPED)
+        
+        # Should have only one NoteEvent for the tied A4
+        a4_events = [e for e in note_events if e.pitch_midi == 69.0]
+        assert len(a4_events) == 1
+        assert a4_events[0].start_time == 0.0
+        assert a4_events[0].duration == 3.0  # Combined duration (2.0 + 1.0)
+
+    def test_tied_notes_fixture(self):
+        """Test tied notes using the test-fluteduet-1.mxl fixture."""
+        from pathlib import Path
+        from music21 import converter
+        
+        fixture_path = Path(__file__).parent / "fixtures" / "test-fluteduet-1.mxl"
+        score = converter.parse(str(fixture_path))
+        
+        note_events = extract_notes(score, ensemble=ENSEMBLE_UNGROUPED)
+        
+        # Check that pitch 69 around time 28-31 is merged into a single NoteEvent
+        # Based on our investigation, there should be a tied note from 28.0-31.0
+        tied_events = [e for e in note_events if e.pitch_midi == 69.0 and 27.0 <= e.start_time <= 32.0]
+        
+        # Should have one continuous event from 28.0-31.0 (duration 3.0)
+        # There might be another tied note starting at 32.0, so we check for the specific one
+        event_28_31 = [e for e in tied_events if e.start_time == 28.0]
+        assert len(event_28_31) == 1
+        assert event_28_31[0].duration == 3.0  # 2.0 + 1.0 from the tied segments
+        
+        # Verify it's continuous (no gap)
+        assert event_28_31[0].start_time + event_28_31[0].duration == 31.0
+
+    def test_non_tied_notes_unaffected(self):
+        """Test that non-tied notes are not affected by tie merging logic."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Flute())
+        
+        # Create two separate notes (not tied)
+        n1 = note.Note("C4")
+        n1.quarterLength = 1.0
+        part.append(n1)
+        
+        n2 = note.Note("D4")
+        n2.quarterLength = 1.0
+        part.append(n2)
+        
+        score.append(part)
+        
+        note_events = extract_notes(score, ensemble=ENSEMBLE_UNGROUPED)
+        
+        # Should have two separate NoteEvents
+        assert len(note_events) == 2
+        assert note_events[0].pitch_midi == 60.0  # C4
+        assert note_events[0].duration == 1.0
+        assert note_events[1].pitch_midi == 62.0  # D4
+        assert note_events[1].duration == 1.0
+
+    def test_chord_with_tied_notes(self):
+        """Test that tied chords are merged correctly."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Piano())
+        
+        # Create a tied chord: C4-E4 for 1 beat, then tied C4-E4 for 1 beat
+        c1 = chord.Chord(["C4", "E4"])
+        c1.quarterLength = 1.0
+        c1.tie = tie.Tie("start")
+        part.append(c1)
+        
+        c2 = chord.Chord(["C4", "E4"])
+        c2.quarterLength = 1.0
+        c2.tie = tie.Tie("stop")
+        part.append(c2)
+        
+        score.append(part)
+        
+        note_events = extract_notes(score, ensemble=ENSEMBLE_UNGROUPED)
+        
+        # Should have two NoteEvents (one for C4, one for E4), each with merged duration
+        assert len(note_events) == 2
+        
+        # Both pitches should be present
+        pitches = sorted([e.pitch_midi for e in note_events])
+        assert pitches == [60.0, 64.0]  # C4, E4
+        
+        # Both should have merged duration of 2.0
+        for event in note_events:
+            assert event.start_time == 0.0
+            assert event.duration == 2.0  # Combined duration
 
 
 class TestCreateVisualization:

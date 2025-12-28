@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Fixed tie handling bug where tied notes over barlines were incorrectly visualized as separate note attacks instead of continuous notes. Tied notes are now properly merged into single NoteEvent objects with combined durations.
+
 ### Changed
 - Removed redundant Homepage field from pyproject.toml, keeping only Repository since they pointed to the same URL
 
