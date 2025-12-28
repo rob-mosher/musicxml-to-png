@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Test to ensure unknown ensemble values fall back to ungrouped rendering and still produce output
+
+### Changed
+- Default ensemble now `ungrouped`, giving every part its own color; CLI help and docs updated accordingly
+- Legend construction refactored with helper/config map for ensemble family legends and ungrouped fallback for future ensembles
+
 ## [0.2.2] - 2025-12-26
 
 ### Changed
@@ -83,4 +90,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.2.1]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.2.1
 [0.2.0]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.2.0
 [0.1.0]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.1.0
-

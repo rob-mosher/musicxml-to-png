@@ -13,6 +13,7 @@ from musicxml_to_png.converter import (
     NoteEvent,
 )
 from musicxml_to_png.instruments import (
+    ENSEMBLE_UNGROUPED,
     ENSEMBLE_ORCHESTRA,
     ENSEMBLE_BIGBAND,
     ORCHESTRA_STRINGS,
@@ -175,6 +176,27 @@ class TestExtractNotes:
         # Verify they're different
         assert orchestra_events[0].instrument_family != bigband_events[0].instrument_family
 
+    def test_ungrouped_mode_assigns_unique_labels_for_duplicates(self):
+        """Default/ungrouped ensemble should give each part its own label."""
+        score = stream.Score()
+        
+        part1 = stream.Part()
+        part1.append(instrument.Flute())
+        part1.append(note.Note("C4"))
+        score.append(part1)
+        
+        part2 = stream.Part()
+        part2.append(instrument.Flute())
+        part2.append(note.Note("D4"))
+        score.append(part2)
+        
+        note_events = extract_notes(score, ensemble=ENSEMBLE_UNGROUPED)
+        
+        labels = {event.instrument_label for event in note_events}
+        assert len(labels) == 2
+        assert all(label.startswith("Flute") for label in labels)
+        assert labels != {"Flute"}  # duplicate parts should be disambiguated
+
     def test_part_without_instrument(self):
         """Test part without explicit instrument (should use part name or default to unknown)."""
         score = stream.Score()
@@ -234,6 +256,54 @@ class TestCreateVisualization:
         ]
         
         create_visualization(note_events, output_path, show_grid=False, ensemble=ENSEMBLE_ORCHESTRA)
+        assert output_path.exists()
+
+    def test_ungrouped_visualization(self, tmp_path):
+        """Test visualization when instruments are ungrouped."""
+        output_path = tmp_path / "output.png"
+        
+        note_events = [
+            NoteEvent(
+                pitch_midi=60.0,
+                start_time=0.0,
+                duration=1.0,
+                instrument_family="Flute",
+                instrument_label="Flute",
+            ),
+            NoteEvent(
+                pitch_midi=62.0,
+                start_time=1.0,
+                duration=1.0,
+                instrument_family="Flute 2",
+                instrument_label="Flute 2",
+            ),
+        ]
+        
+        create_visualization(note_events, output_path, show_grid=False, ensemble=ENSEMBLE_UNGROUPED)
+        assert output_path.exists()
+
+    def test_unknown_ensemble_falls_back_to_ungrouped(self, tmp_path):
+        """Unknown ensemble should fall back to per-instrument labeling/colors."""
+        output_path = tmp_path / "output.png"
+        
+        note_events = [
+            NoteEvent(
+                pitch_midi=60.0,
+                start_time=0.0,
+                duration=1.0,
+                instrument_family="Flute",
+                instrument_label="Flute",
+            ),
+            NoteEvent(
+                pitch_midi=62.0,
+                start_time=1.0,
+                duration=1.0,
+                instrument_family="Clarinet",
+                instrument_label="Clarinet",
+            ),
+        ]
+        
+        create_visualization(note_events, output_path, show_grid=False, ensemble="future-ensemble")
         assert output_path.exists()
 
     def test_minimal_mode(self, tmp_path):
@@ -428,4 +498,3 @@ class TestConvertMusicxmlToPng:
         
         output_path = convert_musicxml_to_png(input_path, minimal=True)
         assert output_path.exists()
-

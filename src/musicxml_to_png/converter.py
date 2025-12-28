@@ -10,6 +10,8 @@ from music21 import converter, stream, note, instrument, pitch, chord
 from musicxml_to_png.instruments import (
     get_instrument_family,
     get_family_color,
+    get_individual_color,
+    ENSEMBLE_UNGROUPED,
     ENSEMBLE_ORCHESTRA,
     ENSEMBLE_BIGBAND,
     # Orchestra families
@@ -36,32 +38,37 @@ class NoteEvent:
         start_time: float,
         duration: float,
         instrument_family: str,
+        instrument_label: Optional[str] = None,
     ):
         self.pitch_midi = pitch_midi
         self.start_time = start_time
         self.duration = duration
         self.instrument_family = instrument_family
+        # Default label to family if none is supplied (useful for per-instrument mode)
+        self.instrument_label = instrument_label or instrument_family
 
 
-def extract_notes(score: stream.Score, ensemble: str = ENSEMBLE_ORCHESTRA) -> List[NoteEvent]:
+def extract_notes(score: stream.Score, ensemble: str = ENSEMBLE_UNGROUPED) -> List[NoteEvent]:
     """
     Extract note events from a music21 Score.
     
     Args:
         score: music21 Score object
-        ensemble: Ensemble type (orchestra or bigband), defaults to orchestra
+        ensemble: Ensemble type (ungrouped, orchestra, or bigband)
     
     Returns:
         List of NoteEvent objects
     """
     note_events = []
+    instrument_label_counts = {}
     
     # Iterate through all parts in the score
-    for part in score.parts:
+    for part_index, part in enumerate(score.parts, start=1):
         # Get instrument information
         part_instrument = None
         midi_program = None
         instrument_name = None
+        instrument_label = None
         
         # Try to get instrument from the part
         for element in part.recurse().getElementsByClass(instrument.Instrument):
@@ -76,12 +83,25 @@ def extract_notes(score: stream.Score, ensemble: str = ENSEMBLE_ORCHESTRA) -> Li
         if part_instrument is None and part.partName:
             instrument_name = str(part.partName)
         
-        # Determine instrument family
-        instrument_family = get_instrument_family(
-            midi_program=midi_program,
-            instrument_name=instrument_name,
-            ensemble=ensemble,
-        )
+        # Build a base label for this instrument/part
+        base_label = (instrument_name or part.partName or f"Instrument {part_index}").strip()
+        if not base_label:
+            base_label = f"Instrument {part_index}"
+        
+        # Determine instrument grouping based on ensemble
+        if ensemble == ENSEMBLE_UNGROUPED:
+            # Keep labels unique even for duplicate instruments (Flute, Flute 2, etc.)
+            count = instrument_label_counts.get(base_label, 0) + 1
+            instrument_label_counts[base_label] = count
+            instrument_label = base_label if count == 1 else f"{base_label} {count}"
+            instrument_family = instrument_label
+        else:
+            instrument_family = get_instrument_family(
+                midi_program=midi_program,
+                instrument_name=instrument_name,
+                ensemble=ensemble,
+            )
+            instrument_label = base_label
         
         # Extract notes from this part
         # Use getOffsetInHierarchy to get absolute offset from score start
@@ -99,6 +119,7 @@ def extract_notes(score: stream.Score, ensemble: str = ENSEMBLE_ORCHESTRA) -> Li
                             start_time=absolute_offset,
                             duration=float(element.quarterLength),
                             instrument_family=instrument_family,
+                            instrument_label=instrument_label,
                         )
                     )
             elif isinstance(element, chord.Chord):
@@ -106,13 +127,14 @@ def extract_notes(score: stream.Score, ensemble: str = ENSEMBLE_ORCHESTRA) -> Li
                 for pitch_obj in element.pitches:
                     if pitch_obj.midi is not None:
                         note_events.append(
-                            NoteEvent(
-                                pitch_midi=float(pitch_obj.midi),
-                                start_time=absolute_offset,
-                                duration=float(element.quarterLength),
-                                instrument_family=instrument_family,
-                            )
+                        NoteEvent(
+                            pitch_midi=float(pitch_obj.midi),
+                            start_time=absolute_offset,
+                            duration=float(element.quarterLength),
+                            instrument_family=instrument_family,
+                            instrument_label=instrument_label,
                         )
+                    )
             elif isinstance(element, note.Rest):
                 # Skip rests
                 continue
@@ -127,7 +149,7 @@ def create_visualization(
     score_duration: Optional[float] = None,
     show_grid: bool = True,
     minimal: bool = False,
-    ensemble: str = ENSEMBLE_ORCHESTRA,
+    ensemble: str = ENSEMBLE_UNGROUPED,
 ) -> None:
     """
     Create a 2D visualization of note events and save as PNG.
@@ -141,7 +163,7 @@ def create_visualization(
                        If None, calculates from note events only.
         show_grid: Whether to display grid lines (default: True)
         minimal: If True, removes labels, legend, title, and borders (default: False)
-        ensemble: Ensemble type (orchestra or bigband), defaults to orchestra
+        ensemble: Ensemble type (ungrouped, orchestra, or bigband)
     """
     if not note_events:
         raise ValueError("No notes found in the MusicXML file")
@@ -173,15 +195,30 @@ def create_visualization(
     # Set up the figure with higher resolution
     fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=200)
     
-    # Group notes by instrument family for color coding
-    families_present = set(event.instrument_family for event in note_events)
+    # Configure color mapping based on ensemble mode
+    family_mode = ensemble in (ENSEMBLE_BIGBAND, ENSEMBLE_ORCHESTRA)
+
+    if not family_mode:
+        color_map = {}
+        legend_labels = []
+        for event in note_events:
+            label = event.instrument_label
+            if label not in color_map:
+                color_map[label] = get_individual_color(len(color_map))
+                legend_labels.append(label)
+    else:
+        # Group notes by instrument family for color coding
+        families_present = set(event.instrument_family for event in note_events)
     
     # Create horizontal bars for each note
     # Use smaller height for better granularity
     bar_height = max(0.3, min(0.8, 1.0 / max(1, pitch_range / 20)))
     
     for event in note_events:
-        color = get_family_color(event.instrument_family, ensemble=ensemble)
+        if not family_mode:
+            color = color_map[event.instrument_label]
+        else:
+            color = get_family_color(event.instrument_family, ensemble=ensemble)
         ax.barh(
             event.pitch_midi,
             event.duration,
@@ -251,30 +288,41 @@ def create_visualization(
                       labelleft=False, labelbottom=False, labeltop=False, labelright=False,
                       length=0, width=0)
     
-    # Create legend for instrument families (ensemble-specific)
+    # Create legend
     legend_elements = []
-    if ensemble == ENSEMBLE_BIGBAND:
-        family_order = [BIGBAND_TRUMPETS, BIGBAND_TROMBONES, BIGBAND_SAXOPHONES, BIGBAND_RHYTHM_SECTION]
-        unknown_family = BIGBAND_UNKNOWN
-    else:  # Default to orchestra
-        family_order = [ORCHESTRA_STRINGS, ORCHESTRA_WINDS, ORCHESTRA_BRASS, ORCHESTRA_PERCUSSION]
-        unknown_family = ORCHESTRA_UNKNOWN
-    
-    for family in family_order:
-        if family in families_present:
-            color = get_family_color(family, ensemble=ensemble)
-            # Format label nicely (replace underscores with spaces, capitalize)
-            label = family.replace("_", " ").title()
-            legend_elements.append(
-                mpatches.Patch(color=color, label=label)
-            )
-    
-    # Add unknown family if present
-    if unknown_family in families_present:
-        color = get_family_color(unknown_family, ensemble=ensemble)
-        legend_elements.append(
-            mpatches.Patch(color=color, label="Unknown")
-        )
+    if not family_mode:
+        for label in legend_labels:
+            legend_elements.append(mpatches.Patch(color=color_map[label], label=label))
+    else:
+        # Helper for family-based legends so additional ensembles can plug in easily
+        def add_family_legend(family_order: List[str], unknown_family: str) -> None:
+            for family in family_order:
+                if family in families_present:
+                    color = get_family_color(family, ensemble=ensemble)
+                    label = family.replace("_", " ").title()
+                    legend_elements.append(mpatches.Patch(color=color, label=label))
+            if unknown_family in families_present:
+                color = get_family_color(unknown_family, ensemble=ensemble)
+                legend_elements.append(mpatches.Patch(color=color, label="Unknown"))
+
+        legend_configs = {
+            ENSEMBLE_BIGBAND: (
+                [BIGBAND_TRUMPETS, BIGBAND_TROMBONES, BIGBAND_SAXOPHONES, BIGBAND_RHYTHM_SECTION],
+                BIGBAND_UNKNOWN,
+            ),
+            ENSEMBLE_ORCHESTRA: (
+                [ORCHESTRA_STRINGS, ORCHESTRA_WINDS, ORCHESTRA_BRASS, ORCHESTRA_PERCUSSION],
+                ORCHESTRA_UNKNOWN,
+            ),
+        }
+
+        if ensemble in legend_configs:
+            family_order, unknown_family = legend_configs[ensemble]
+            add_family_legend(family_order, unknown_family)
+        else:
+            # Fallback for future/unknown ensembles: treat as ungrouped for legends
+            for label in legend_labels:
+                legend_elements.append(mpatches.Patch(color=color_map[label], label=label))
     
     # Show legend only if not in minimal mode
     if legend_elements and not minimal:
@@ -300,7 +348,7 @@ def convert_musicxml_to_png(
     title: Optional[str] = None,
     show_grid: bool = True,
     minimal: bool = False,
-    ensemble: str = ENSEMBLE_ORCHESTRA,
+    ensemble: str = ENSEMBLE_UNGROUPED,
 ) -> Path:
     """
     Convert a MusicXML file to a PNG visualization.
@@ -312,7 +360,7 @@ def convert_musicxml_to_png(
         title: Optional title for the visualization
         show_grid: Whether to display grid lines (default: True)
         minimal: If True, removes labels, legend, title, and borders (default: False)
-        ensemble: Ensemble type (orchestra or bigband), defaults to orchestra
+        ensemble: Ensemble type (ungrouped, orchestra, or bigband)
     
     Returns:
         Path to the created PNG file
@@ -353,4 +401,3 @@ def convert_musicxml_to_png(
     create_visualization(note_events, output_path, title, score_duration, show_grid, minimal, ensemble)
     
     return output_path
-

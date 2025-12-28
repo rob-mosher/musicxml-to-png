@@ -8,7 +8,11 @@ from pathlib import Path
 from music21.musicxml.xmlToM21 import MusicXMLWarning
 
 from musicxml_to_png.converter import convert_musicxml_to_png
-from musicxml_to_png.instruments import ENSEMBLE_ORCHESTRA, ENSEMBLE_BIGBAND
+from musicxml_to_png.instruments import (
+    ENSEMBLE_UNGROUPED,
+    ENSEMBLE_ORCHESTRA,
+    ENSEMBLE_BIGBAND,
+)
 
 
 def main() -> None:
@@ -65,9 +69,12 @@ Examples:
     parser.add_argument(
         "--ensemble",
         type=str,
-        default=ENSEMBLE_ORCHESTRA,
-        choices=[ENSEMBLE_ORCHESTRA, ENSEMBLE_BIGBAND],
-        help=f"Ensemble type for instrument categorization (default: {ENSEMBLE_ORCHESTRA})",
+        default=ENSEMBLE_UNGROUPED,
+        choices=[ENSEMBLE_UNGROUPED, ENSEMBLE_ORCHESTRA, ENSEMBLE_BIGBAND],
+        help=(
+            "Ensemble type for instrument categorization. "
+            "Defaults to per-instrument colors; choose orchestra or bigband to group by family."
+        ),
     )
     
     parser.add_argument(
@@ -125,4 +132,3 @@ Examples:
     except Exception as e:
         print(f"Unexpected error: {e}", file=sys.stderr)
         sys.exit(1)
-

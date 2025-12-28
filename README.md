@@ -27,7 +27,7 @@ See [Installation](#installation) for development setup.
 
 ## Features
 
-Convert MusicXML files into clean, analyzable PNG visualizations showing temporal flow (horizontal axis = time), pitch range (vertical axis = low to high), note duration (length of visual bars), and instrument families (color-coded by ensemble type).
+Convert MusicXML files into clean, analyzable PNG visualizations showing temporal flow (horizontal axis = time), pitch range (vertical axis = low to high), note duration (length of visual bars), and instrument identities (color-coded per instrument by default or by ensemble family when requested).
 
 **Use cases:** Human-AI collaboration on musical analysis, visual comparison of arrangements, AI pipeline integration for score processing, and educational visualization of orchestration principles.
 
@@ -35,10 +35,11 @@ Convert MusicXML files into clean, analyzable PNG visualizations showing tempora
 - Extract note events (pitch, duration, start time, instrument)
 - High-resolution 2D visualization (time × pitch) with fine-grained grid
 - Multiple ensemble types:
+  - Ungrouped (default): every part gets its own color, even if multiple of the same instrument appear
   - Orchestra: strings, winds, brass, percussion
   - Bigband: trumpets, trombones, saxophones, rhythm section
   - (More ensemble types coming - jazz combo, chamber, etc.)
-- Color-coded instrument families (distinct palettes per ensemble)
+- Color-coded instruments or families (per-instrument by default, ensemble palettes when requested)
 - Customizable visualization:
   - Grid lines (enabled by default, disable with --no-grid)
   - Minimal mode (remove all labels, legend, title, borders)
@@ -148,10 +149,13 @@ musicxml-to-png input.xml -v
 Select the instrument categorization scheme:
 
 ```bash
-# Orchestra (default) - strings, winds, brass, percussion
+# Ungrouped (default) - every instrument gets its own color
 musicxml-to-png input.xml
 
-# Bigband - trumpets, trombones, saxophones, rhythm section
+# Group by orchestra families
+musicxml-to-png input.xml --ensemble orchestra
+
+# Group by bigband families
 musicxml-to-png input.xml --ensemble bigband
 ```
 

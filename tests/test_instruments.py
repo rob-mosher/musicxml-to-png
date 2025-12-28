@@ -5,6 +5,7 @@ import pytest
 from musicxml_to_png.instruments import (
     get_instrument_family,
     get_family_color,
+    get_individual_color,
     ENSEMBLE_ORCHESTRA,
     ENSEMBLE_BIGBAND,
     ORCHESTRA_STRINGS,
@@ -247,3 +248,12 @@ class TestColorMapping:
         # But test that unknown is consistent
         assert get_family_color(ORCHESTRA_UNKNOWN, ENSEMBLE_ORCHESTRA) == get_family_color(BIGBAND_UNKNOWN, ENSEMBLE_BIGBAND)
 
+    def test_individual_color_palette_cycles(self):
+        """Test that ungrouped instrument colors cycle through the palette."""
+        assert get_individual_color(0) == get_individual_color(20)
+        assert get_individual_color(1) == get_individual_color(21)
+
+    def test_individual_color_negative_index(self):
+        """Test that negative indices are rejected for ungrouped colors."""
+        with pytest.raises(ValueError):
+            get_individual_color(-1)
