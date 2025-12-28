@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Removed redundant Homepage field from pyproject.toml, keeping only Repository since they pointed to the same URL
+
 ## [0.2.3] - 2025-12-26
 
 ### Changed

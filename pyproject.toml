@@ -40,7 +40,6 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/rob-mosher/musicxml-to-png"
 Repository = "https://github.com/rob-mosher/musicxml-to-png"
 Issues = "https://github.com/rob-mosher/musicxml-to-png/issues"
 
