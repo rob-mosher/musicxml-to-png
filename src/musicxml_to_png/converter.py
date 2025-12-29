@@ -10,6 +10,7 @@ from musicxml_to_png.extract import (
     extract_rehearsal_marks,
     build_measure_offset_map,
 )
+from musicxml_to_png.models import DEFAULT_STACCATO_FACTOR, MIN_STACCATO_FACTOR, MAX_STACCATO_FACTOR
 from musicxml_to_png.visualize import create_visualization
 from musicxml_to_png.instruments import (
     ENSEMBLE_UNGROUPED,
@@ -34,6 +35,7 @@ def convert_musicxml_to_png(
     time_stretch: float = 1.0,
     fig_width: Optional[float] = None,
     split_overlaps: bool = True,
+    staccato_factor: float = DEFAULT_STACCATO_FACTOR,
 ) -> Path:
     """Convert a MusicXML file to a PNG visualization."""
     input_path = Path(input_path)
@@ -53,11 +55,14 @@ def convert_musicxml_to_png(
             raise ValueError(f"Failed to parse MusicXML file: {e}") from e
 
     measure_offsets, canonical_duration = build_measure_offset_map(score)
+    clamped_staccato = max(MIN_STACCATO_FACTOR, min(MAX_STACCATO_FACTOR, float(staccato_factor)))
+
     note_events = extract_notes(
         score,
         ensemble=ensemble,
         measure_offsets=measure_offsets,
         split_overlaps=split_overlaps,
+        staccato_factor=clamped_staccato,
     )
     rehearsal_marks = (
         extract_rehearsal_marks(score, measure_offsets=measure_offsets) if show_rehearsal_marks else []

@@ -19,6 +19,9 @@ DYNAMIC_MARK_LEVELS: Dict[str, float] = {
 MIN_DYNAMIC_LEVEL = 0.2
 MAX_DYNAMIC_LEVEL = 1.2
 DEFAULT_DYNAMIC_LEVEL = 0.6
+DEFAULT_STACCATO_FACTOR = 0.4
+MIN_STACCATO_FACTOR = 0.1
+MAX_STACCATO_FACTOR = 0.9
 
 
 def _clamp_dynamic_level(level: float) -> float:
@@ -55,4 +58,3 @@ class RehearsalMark:
     def __init__(self, label: str, start_time: float):
         self.label = label
         self.start_time = start_time
-

@@ -4,7 +4,7 @@ from pathlib import Path
 import tempfile
 
 import pytest
-from music21 import stream, note, instrument, chord, pitch, tie, dynamics, converter, expressions
+from music21 import stream, note, instrument, chord, pitch, tie, dynamics, converter, expressions, articulations
 
 from musicxml_to_png.converter import convert_musicxml_to_png
 from musicxml_to_png.extract import (
@@ -19,6 +19,9 @@ from musicxml_to_png.models import (
     DEFAULT_DYNAMIC_LEVEL,
     MIN_DYNAMIC_LEVEL,
     MAX_DYNAMIC_LEVEL,
+    DEFAULT_STACCATO_FACTOR,
+    MIN_STACCATO_FACTOR,
+    MAX_STACCATO_FACTOR,
 )
 from musicxml_to_png.instruments import (
     ENSEMBLE_UNGROUPED,
@@ -469,6 +472,43 @@ class TestExtractNotes:
         assert flute_event.start_time == 0.0
         assert flute_event.duration == 2.0
         assert flute_event.pitch_overlap == 2
+
+    def test_staccato_shortens_duration_default_factor(self):
+        """Staccato articulations shorten duration by the default factor."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Flute())
+
+        n1 = note.Note("C4")
+        n1.quarterLength = 1.0
+        n1.articulations.append(articulations.Staccato())
+        part.append(n1)
+        score.append(part)
+
+        note_events = extract_notes(score, ensemble=ENSEMBLE_ORCHESTRA)
+        assert len(note_events) == 1
+        assert pytest.approx(note_events[0].duration, rel=1e-6) == 1.0 * DEFAULT_STACCATO_FACTOR
+
+    def test_staccato_shortens_duration_custom_factor(self):
+        """Custom staccato factor is applied and clamped to allowed range."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Oboe())
+
+        n1 = note.Note("D4")
+        n1.quarterLength = 2.0
+        n1.articulations.append(articulations.Staccato())
+        part.append(n1)
+        score.append(part)
+
+        factor = 0.5
+        note_events = extract_notes(score, ensemble=ENSEMBLE_ORCHESTRA, staccato_factor=factor)
+        assert len(note_events) == 1
+        assert pytest.approx(note_events[0].duration, rel=1e-6) == 2.0 * factor
+
+        # Clamping lower than min
+        clamped_events = extract_notes(score, ensemble=ENSEMBLE_ORCHESTRA, staccato_factor=0.05)
+        assert pytest.approx(clamped_events[0].duration, rel=1e-6) == 2.0 * MIN_STACCATO_FACTOR
 
     def test_percussion_offsets_align_with_other_parts(self):
         """Percussion (timpani) should align with winds/strings when measures differ."""

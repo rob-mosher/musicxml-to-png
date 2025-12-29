@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Default overlap splitting for stacked same-pitch notes so only the truly simultaneous segments use thicker bars.
 - CLI flag `--no-overlap-splitting` (and library argument `split_overlaps`) to opt into legacy whole-note stacking; default remains splitting so only truly overlapping segments are thickened.
+- Support for staccato articulations by shortening durations (default 65%) with configurable `--staccato-factor` (clamped 0.1–0.9).
 
 ## [0.4.0] - 2025-12-29
 

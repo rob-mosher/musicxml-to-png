@@ -16,6 +16,7 @@ from musicxml_to_png.instruments import (
     ENSEMBLE_ORCHESTRA,
     ENSEMBLE_BIGBAND,
 )
+from musicxml_to_png.models import DEFAULT_STACCATO_FACTOR, MIN_STACCATO_FACTOR, MAX_STACCATO_FACTOR
 
 
 def _print_ensemble_suggestions(suggestions) -> None:
@@ -194,6 +195,16 @@ Examples:
             "(legacy behavior). Default is to split and only thicken the overlapping segments."
         ),
     )
+
+    parser.add_argument(
+        "--staccato-factor",
+        type=float,
+        default=DEFAULT_STACCATO_FACTOR,
+        help=(
+            f"Scale duration for staccato articulations (range {MIN_STACCATO_FACTOR}-{MAX_STACCATO_FACTOR}, "
+            f"default {DEFAULT_STACCATO_FACTOR})."
+        ),
+    )
     
     args = parser.parse_args()
     
@@ -239,6 +250,14 @@ Examples:
         _print_ensemble_suggestions(suggestions)
 
     try:
+        # Validate staccato factor
+        if not (MIN_STACCATO_FACTOR <= args.staccato_factor <= MAX_STACCATO_FACTOR):
+            print(
+                f"Error: --staccato-factor must be between {MIN_STACCATO_FACTOR} and {MAX_STACCATO_FACTOR}",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+
         # Perform conversion
         result_path = convert_musicxml_to_png(
             input_path=input_path,
@@ -256,6 +275,7 @@ Examples:
             fig_width=args.fig_width,
             dpi=args.dpi,
             split_overlaps=not args.no_overlap_splitting,
+            staccato_factor=args.staccato_factor,
         )
         if not args.no_output:
             print(f"Successfully created visualization: {result_path}")

@@ -45,6 +45,7 @@ Convert MusicXML files into clean, analyzable PNG visualizations showing tempora
   - Minimal mode (remove all labels, legend, title, borders, `--minimal`)
   - Custom titles (`-t "Custom Title"`)
   - Width controls: `--time-stretch` or `--fig-width`
+  - Staccato shortening (default 40%); override with `--staccato-factor` (0.1–0.9)
   - Output DPI control: `--dpi` (default 150)
   - No-output mode for smoke tests: `--no-output`
   - Verbose mode for debugging (`-v`/`--verbose`)
@@ -168,6 +169,16 @@ musicxml-to-png input.xml --ensemble bigband
 ```bash
 musicxml-to-png input.xml --ensemble bigband --minimal --no-grid -o output.png
 ```
+
+### Visual examples (placeholders)
+
+Screenshots to be added for the most visible options:
+
+- Default view (grid + labels)
+- Minimal view (`--minimal`)
+- Ensemble grouping (orchestra/bigband palettes)
+- Overlap handling: default split vs. legacy `--no-overlap-splitting`
+- Wider timeline (`--time-stretch 1.5`) vs. tight (`--time-stretch 0.8`)
 
 ### Python Library
 

@@ -2,7 +2,7 @@
 
 from typing import Dict, List, Optional, Tuple
 
-from music21 import chord, dynamics, expressions, instrument, note, stream
+from music21 import chord, dynamics, expressions, instrument, note, stream, articulations
 
 from musicxml_to_png.instruments import get_instrument_family
 from musicxml_to_png.models import (
@@ -13,6 +13,9 @@ from musicxml_to_png.models import (
     NoteEvent,
     RehearsalMark,
     _clamp_dynamic_level,
+    DEFAULT_STACCATO_FACTOR,
+    MIN_STACCATO_FACTOR,
+    MAX_STACCATO_FACTOR,
 )
 
 
@@ -221,10 +224,12 @@ def extract_notes(
     ensemble: str,
     measure_offsets: Optional[Dict[str, float]] = None,
     split_overlaps: bool = True,
+    staccato_factor: float = DEFAULT_STACCATO_FACTOR,
 ) -> List[NoteEvent]:
     """
     Extract note events from a music21 Score.
     """
+    staccato_factor = max(MIN_STACCATO_FACTOR, min(MAX_STACCATO_FACTOR, staccato_factor))
     measure_offsets, _ = (
         _build_measure_offset_map(score) if measure_offsets is None else (measure_offsets, None)
     )
@@ -274,12 +279,14 @@ def extract_notes(
             if isinstance(element, note.Note):
                 pitch_obj = element.pitch
                 if pitch_obj.midi is not None:
+                    is_staccato = any(isinstance(art, articulations.Staccato) for art in element.articulations)
+                    effective_duration = float(element.quarterLength) * (staccato_factor if is_staccato else 1.0)
                     tie_type = element.tie.type if element.tie is not None else None
                     note_data.append(
                         (
                             float(pitch_obj.midi),
                             absolute_offset,
-                            float(element.quarterLength),
+                            effective_duration,
                             tie_type,
                             element,
                         )
@@ -287,12 +294,14 @@ def extract_notes(
             elif isinstance(element, chord.Chord):
                 for pitch_obj in element.pitches:
                     if pitch_obj.midi is not None:
+                        is_staccato = any(isinstance(art, articulations.Staccato) for art in element.articulations)
+                        effective_duration = float(element.quarterLength) * (staccato_factor if is_staccato else 1.0)
                         tie_type = element.tie.type if element.tie is not None else None
                         note_data.append(
                             (
                                 float(pitch_obj.midi),
                                 absolute_offset,
-                                float(element.quarterLength),
+                                effective_duration,
                                 tie_type,
                                 element,
                             )
