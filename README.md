@@ -33,19 +33,22 @@ Convert MusicXML files into clean, analyzable PNG visualizations showing tempora
 
 - Parse MusicXML files (.xml, .musicxml, .mxl)
 - Extract note events (pitch, duration, start time, instrument)
-- High-resolution 2D visualization (time × pitch) with fine-grained grid
+- High-resolution 2D visualization (time × pitch) with grid/labels toggles
 - Multiple ensemble types:
   - Ungrouped (default): every part gets its own color, even if multiple of the same instrument appear
   - Orchestra: strings, winds, brass, percussion
   - Bigband: trumpets, trombones, saxophones, rhythm section
-  - (More ensemble types coming - jazz combo, chamber, etc.)
+  - (More ensemble types coming - jazzcombo, chamber, etc.)
 - Color-coded instruments or families (per-instrument by default, ensemble palettes when requested)
 - Customizable visualization:
-  - Grid lines (enabled by default, disable with --no-grid)
-  - Minimal mode (remove all labels, legend, title, borders)
-  - Custom titles
-  - Verbose mode for debugging (-v/--verbose)
-- Export as high-resolution PNG (300 DPI)
+  - Grid lines (enabled by default, disable with `--no-grid`)
+  - Minimal mode (remove all labels, legend, title, borders, `--minimal`)
+  - Custom titles (`-t "Custom Title"`)
+  - Width controls: `--time-stretch` or `--fig-width`
+  - Output DPI control: `--dpi` (default 150)
+  - No-output mode for smoke tests: `--no-output`
+  - Verbose mode for debugging (`-v`/`--verbose`)
+- Export as high-resolution PNG with user-settable DPI, defaulting to 150 (`--dpi 72`)
 
 ## Getting Your Music into MusicXML
 
