@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Optional
 
-from music21 import converter
+from music21 import converter, stream
 
 from musicxml_to_png.extract import (
     extract_notes,
@@ -20,6 +20,7 @@ from musicxml_to_png.instruments import (
 
 def convert_musicxml_to_png(
     input_path: Path,
+    score: Optional[stream.Score] = None,  # Optional pre-parsed music21 Score to avoid re-parsing
     output_path: Optional[Path] = None,
     title: Optional[str] = None,
     show_grid: bool = True,
@@ -41,10 +42,11 @@ def convert_musicxml_to_png(
     else:
         output_path = Path(output_path)
 
-    try:
-        score = converter.parse(str(input_path))
-    except Exception as e:
-        raise ValueError(f"Failed to parse MusicXML file: {e}") from e
+    if score is None:
+        try:
+            score = converter.parse(str(input_path))
+        except Exception as e:
+            raise ValueError(f"Failed to parse MusicXML file: {e}") from e
 
     measure_offsets, canonical_duration = build_measure_offset_map(score)
     note_events = extract_notes(score, ensemble=ensemble, measure_offsets=measure_offsets)

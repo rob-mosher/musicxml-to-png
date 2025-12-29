@@ -9,12 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- CLI now supports `--version` to print the tool version (short `-v` remains verbose)
 - Visualization can display MusicXML rehearsal marks as labeled timeline guides
+- CLI now auto-detects likely ensembles (orchestra/bigband/ungrouped) and prints suggestions when using the default ensemble
+- Ensemble detection suggestions now print one line per detected ensemble with explicit `"--ensemble <name>"` hint, prefixed with `Info:` and non-impacting to output
+- CLI flag `--version` to print the tool version (short `-v` remains verbose)
 - CLI flag `--no-rehearsal-marks` to suppress rehearsal mark rendering
 - CLI flag `--no-legend` to disable legend rendering
 - CLI flag `--no-title` to omit the plot title
 - CLI flag `--no-output` to exercise the full pipeline without writing a PNG (useful for smoke tests)
+- CLI flag `--skip-ensemble-detection` to suppress ensemble auto-detection (e.g., in CI)
+- CLI flag `--print-ensemble-confidences` to emit raw ensemble confidences for all candidates on one line (debug/pipelines)
 
 ### Changed
 

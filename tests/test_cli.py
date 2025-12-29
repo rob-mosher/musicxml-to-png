@@ -109,15 +109,18 @@ class TestCLIArguments:
         if not fixture_path.exists():
             pytest.skip("test-bigband-1.mxl fixture missing")
 
+        output_path = tmp_path / "bigband.png"
+
         with patch("sys.argv", [
             "musicxml-to-png",
             str(fixture_path),
             "--no-rehearsal-marks",
+            "-o",
+            str(output_path),
         ]):
             main()
 
-        output_file = fixture_path.with_suffix(".png")
-        assert output_file.exists()
+        assert output_path.exists()
 
     def test_no_legend_flag(self, sample_musicxml_file, tmp_path, capsys):
         """Test --no-legend option."""

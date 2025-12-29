@@ -4,7 +4,6 @@ This document outlines planned features and improvements for musicxml-to-png.
 
 ## Near-term
 
-- Auto-detection of ensemble type
 - Additional ensemble types (jazz combo, chamber, wind ensemble)
 - Articulation markers
 

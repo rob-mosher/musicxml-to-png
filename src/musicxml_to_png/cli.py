@@ -5,15 +5,49 @@ import sys
 import warnings
 from pathlib import Path
 
+from music21 import converter as m21_converter
 from music21.musicxml.xmlToM21 import MusicXMLWarning
 
 from musicxml_to_png import __version__
 from musicxml_to_png.converter import convert_musicxml_to_png
+from musicxml_to_png.ensemble_detection import detect_ensembles
 from musicxml_to_png.instruments import (
     ENSEMBLE_UNGROUPED,
     ENSEMBLE_ORCHESTRA,
     ENSEMBLE_BIGBAND,
 )
+
+
+def _print_ensemble_suggestions(suggestions) -> None:
+    """
+    Print ensemble suggestions when using the default ensemble.
+
+    Behavior:
+      - Filter out ungrouped; only show entries with confidence >= 0.25.
+      - Show top candidate, and second candidate if within 0.1 of the top.
+      - Message format remains unchanged from prior behavior.
+    """
+    candidates = [
+        (name, confidence)
+        for name, confidence in suggestions
+        if name != ENSEMBLE_UNGROUPED and confidence >= 0.25
+    ]
+    if not candidates:
+        return
+
+    candidates.sort(key=lambda item: item[1], reverse=True)
+    filtered = [candidates[0]]
+    if len(candidates) > 1:
+        next_confidence = candidates[1][1]
+        if (filtered[0][1] - next_confidence) <= 0.1:
+            filtered.append(candidates[1])
+
+    for name, confidence in filtered:
+        pct = confidence * 100.0
+        print(
+            f"Info: Ensemble detected: {name} ({pct:.0f}%). "
+            f'Use "--ensemble {name}" to group instruments.'
+        )
 
 
 def main() -> None:
@@ -115,6 +149,21 @@ Examples:
         version="%(prog)s " + __version__,
         help="Show the musicxml-to-png version and exit",
     )
+
+    parser.add_argument(
+        "--skip-ensemble-detection",
+        action="store_true",
+        help="Skip ensemble auto-detection suggestions (useful for CI/pipelines).",
+    )
+
+    parser.add_argument(
+        "--print-ensemble-confidences",
+        action="store_true",
+        help=(
+            "Print raw ensemble detection confidences (0-1) for all candidates; "
+            "useful for debugging or pipeline parsing."
+        ),
+    )
     
     args = parser.parse_args()
     
@@ -145,9 +194,25 @@ Examples:
     output_path = Path(args.output) if args.output else None
     
     try:
+        score = m21_converter.parse(str(input_path))
+    except Exception as e:
+        print(f"Error: Failed to parse MusicXML file: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    if args.ensemble == ENSEMBLE_UNGROUPED and not args.skip_ensemble_detection:
+        suggestions = detect_ensembles(score)
+
+        if args.print_ensemble_confidences:
+            confidences_str = ", ".join(f"{name}={confidence:.2f}" for name, confidence in suggestions)
+            print(f"Ensemble confidences: {confidences_str}")
+
+        _print_ensemble_suggestions(suggestions)
+
+    try:
         # Perform conversion
         result_path = convert_musicxml_to_png(
             input_path=input_path,
+            score=score,
             output_path=output_path,
             title=args.title if not args.minimal else None,
             show_grid=not args.no_grid,
