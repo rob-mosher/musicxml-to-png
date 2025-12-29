@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI now supports `--version` to print the tool version (short `-v` remains verbose)
 - Visualization can display MusicXML rehearsal marks as labeled timeline guides
 - CLI flag `--no-rehearsal-marks` to suppress rehearsal mark rendering
+- CLI flag `--no-legend` to disable legend rendering
 
 ### Fixed
 

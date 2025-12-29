@@ -72,6 +72,12 @@ Examples:
         action="store_true",
         help="Disable rendering rehearsal letters/numbers on the timeline",
     )
+
+    parser.add_argument(
+        "--no-legend",
+        action="store_true",
+        help="Disable the legend in the visualization",
+    )
     
     parser.add_argument(
         "--ensemble",
@@ -136,6 +142,7 @@ Examples:
             minimal=args.minimal,
             ensemble=args.ensemble,
             show_rehearsal_marks=not args.no_rehearsal_marks,
+            show_legend=not args.no_legend,
         )
         print(f"Successfully created visualization: {result_path}")
     except FileNotFoundError as e:

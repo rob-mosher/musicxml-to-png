@@ -440,6 +440,7 @@ def create_visualization(
     minimal: bool = False,
     ensemble: str = ENSEMBLE_UNGROUPED,
     rehearsal_marks: Optional[List[RehearsalMark]] = None,
+    show_legend: bool = True,
 ) -> None:
     """
     Create a 2D visualization of note events and save as PNG.
@@ -650,7 +651,7 @@ def create_visualization(
                 legend_elements.append(mpatches.Patch(color=color_map[label], label=label))
     
     # Show legend only if not in minimal mode
-    if legend_elements and not minimal:
+    if legend_elements and not minimal and show_legend:
         legend_elements.append(
             mpatches.Patch(
                 facecolor="none",
@@ -682,6 +683,7 @@ def convert_musicxml_to_png(
     minimal: bool = False,
     ensemble: str = ENSEMBLE_UNGROUPED,
     show_rehearsal_marks: bool = True,
+    show_legend: bool = True,
 ) -> Path:
     """
     Convert a MusicXML file to a PNG visualization.
@@ -750,6 +752,7 @@ def convert_musicxml_to_png(
         minimal,
         ensemble,
         rehearsal_marks=rehearsal_marks,
+        show_legend=show_legend,
     )
     
     return output_path
