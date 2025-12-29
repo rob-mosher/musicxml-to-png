@@ -1,7 +1,7 @@
 """Core conversion logic for MusicXML to PNG."""
 
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -80,7 +80,58 @@ def _clamp_dynamic_level(level: float) -> float:
     return max(MIN_DYNAMIC_LEVEL, min(MAX_DYNAMIC_LEVEL, level))
 
 
-def extract_notes(score: stream.Score, ensemble: str = ENSEMBLE_UNGROUPED) -> List[NoteEvent]:
+def _build_measure_offset_map(score: stream.Score) -> tuple[Dict[str, float], float]:
+    """
+    Build a map of measure start offsets (in quarter lengths) using a
+    conservative, cross-part approach that favors the shortest duration seen
+    for each measure number. This prevents parts with missing or inflated
+    time signatures (common in percussion) from pushing their entries late.
+    
+    Returns:
+        measure_offsets: mapping of measure number -> absolute start time
+        total_duration: cumulative duration of all measures encountered
+    """
+    measure_lengths: Dict[str, List[float]] = {}
+    measure_order: List[str] = []
+
+    for part in score.parts:
+        for measure in part.getElementsByClass(stream.Measure):
+            measure_num = str(measure.number)
+            duration = None
+            if measure.barDuration is not None:
+                duration = float(measure.barDuration.quarterLength)
+            elif measure.duration is not None:
+                duration = float(measure.duration.quarterLength)
+
+            if duration is None:
+                continue
+
+            measure_lengths.setdefault(measure_num, []).append(duration)
+            if measure_num not in measure_order:
+                measure_order.append(measure_num)
+
+    if not measure_lengths:
+        return {}, float(score.duration.quarterLength)
+
+    # Use the shortest duration seen for each measure to avoid inflated bars
+    canonical_lengths: Dict[str, float] = {
+        num: min(durations) for num, durations in measure_lengths.items()
+    }
+
+    measure_offsets: Dict[str, float] = {}
+    current_offset = 0.0
+    for measure_num in measure_order:
+        measure_offsets[measure_num] = current_offset
+        current_offset += canonical_lengths.get(measure_num, 0.0)
+
+    return measure_offsets, current_offset
+
+
+def extract_notes(
+    score: stream.Score,
+    ensemble: str = ENSEMBLE_UNGROUPED,
+    measure_offsets: Optional[Dict[str, float]] = None,
+) -> List[NoteEvent]:
     """
     Extract note events from a music21 Score.
     
@@ -91,6 +142,20 @@ def extract_notes(score: stream.Score, ensemble: str = ENSEMBLE_UNGROUPED) -> Li
     Returns:
         List of NoteEvent objects
     """
+    measure_offsets, _ = (
+        _build_measure_offset_map(score) if measure_offsets is None else (measure_offsets, None)
+    )
+
+    def _absolute_offset(element) -> float:
+        """Compute a stable absolute offset using measure offsets when available."""
+        measure_num = getattr(element, "measureNumber", None)
+        if measure_num is not None:
+            key = str(measure_num)
+            if key in measure_offsets:
+                return measure_offsets[key] + float(getattr(element, "offset", 0.0))
+        # Fallback to music21's hierarchical offset if we could not resolve
+        return float(element.getOffsetInHierarchy(score))
+
     note_events = []
     instrument_label_counts = {}
     
@@ -141,7 +206,7 @@ def extract_notes(score: stream.Score, ensemble: str = ENSEMBLE_UNGROUPED) -> Li
         
         for element in part.recurse().notes:
             # Get absolute offset from the start of the score
-            absolute_offset = float(element.getOffsetInHierarchy(score))
+            absolute_offset = _absolute_offset(element)
             
             if isinstance(element, note.Note):
                 # Single note
@@ -184,7 +249,7 @@ def extract_notes(score: stream.Score, ensemble: str = ENSEMBLE_UNGROUPED) -> Li
         # Build a simple dynamic timeline for this part so we can grab the most recent marking
         dynamic_timeline = []
         for dyn in part.recurse().getElementsByClass(dynamics.Dynamic):
-            dyn_offset = float(dyn.getOffsetInHierarchy(score))
+            dyn_offset = _absolute_offset(dyn)
             dyn_mark = None
             if hasattr(dyn, "value") and dyn.value is not None:
                 dyn_mark = str(dyn.value).lower()
@@ -584,12 +649,17 @@ def convert_musicxml_to_png(
     except Exception as e:
         raise ValueError(f"Failed to parse MusicXML file: {e}") from e
     
-    # Extract note events
-    note_events = extract_notes(score, ensemble=ensemble)
+    # Build a consistent measure timeline before extracting notes so that
+    # parts with missing or divergent time signatures (e.g., percussion)
+    # align correctly across the score.
+    measure_offsets, canonical_duration = _build_measure_offset_map(score)
+
+    # Extract note events using the canonical measure offsets
+    note_events = extract_notes(score, ensemble=ensemble, measure_offsets=measure_offsets)
     
-    # Get the actual duration of the score (in quarter notes/beats)
-    # This accounts for all measures, not just where notes are
-    score_duration = score.duration.quarterLength
+    # Use the canonical duration derived from the measure map to cover the
+    # full score length, falling back to the score duration if unavailable.
+    score_duration = canonical_duration if canonical_duration is not None else score.duration.quarterLength
     
     # Use input filename as title if not provided
     if title is None:

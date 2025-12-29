@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - CLI now supports `--version` to print the tool version (short `-v` remains verbose)
 
+### Fixed
+
+- Aligned part offsets using a shared, canonical measure map to prevent percussion (e.g., timpani) from drifting late when bar durations are missing or inflated; added `test-orchestra-2.mxl` fixture and regression test to lock timing
+
 ## [0.3.0] - 2025-12-28
 
 ### Added

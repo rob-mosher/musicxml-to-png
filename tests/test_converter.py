@@ -4,7 +4,7 @@ from pathlib import Path
 import tempfile
 
 import pytest
-from music21 import stream, note, instrument, chord, pitch, tie, dynamics
+from music21 import stream, note, instrument, chord, pitch, tie, dynamics, converter
 
 from musicxml_to_png.converter import (
     extract_notes,
@@ -408,6 +408,20 @@ class TestExtractNotes:
         note_events = extract_notes(score, ensemble=ENSEMBLE_ORCHESTRA)
         assert len(note_events) == 2
         assert all(event.pitch_overlap == 2 for event in note_events)
+
+    def test_percussion_offsets_align_with_other_parts(self):
+        """Percussion (timpani) should align with winds/strings when measures differ."""
+        fixture_path = Path(__file__).parent / "fixtures" / "test-orchestra-2.mxl"
+        score = converter.parse(str(fixture_path))
+
+        note_events = extract_notes(score, ensemble=ENSEMBLE_ORCHESTRA)
+        timp_events = [e for e in note_events if "timp" in e.instrument_label.lower()]
+
+        assert timp_events, "Expected timpani events to be present"
+
+        first_timp = min(e.start_time for e in timp_events)
+        # The timpani should enter around measure 11 (~20.5 beats), not after beat 40
+        assert 20.0 <= first_timp <= 21.0
 
 
 class TestCreateVisualization:
