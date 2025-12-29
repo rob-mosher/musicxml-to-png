@@ -14,17 +14,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.0] - 2025-12-28
 
 ### Added
+
 - Visualization now reflects musical intent more richly: bar opacity responds to dynamics markings/velocities, and bar thickness scales with simultaneous same-pitch stacking (ties already merged). Added regression tests for dynamics capture and pitch overlap tagging.
 
 ### Fixed
+
 - Fixed tie handling bug where tied notes over barlines were incorrectly visualized as separate note attacks instead of continuous notes. Tied notes are now properly merged into single NoteEvent objects with combined durations.
 
 ### Changed
+
 - Removed redundant Homepage field from pyproject.toml, keeping only Repository since they pointed to the same URL
 
 ## [0.2.3] - 2025-12-27
 
 ### Changed
+
 - Default ensemble now `ungrouped`, giving every part its own color; CLI help and docs updated accordingly
 - Legend construction refactored with helper/config map for ensemble family legends and ungrouped fallback for future ensembles
 
