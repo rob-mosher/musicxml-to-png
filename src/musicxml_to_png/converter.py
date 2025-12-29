@@ -30,6 +30,9 @@ def convert_musicxml_to_png(
     show_legend: bool = True,
     show_title: bool = True,
     write_output: bool = True,
+    dpi: int = 150,
+    time_stretch: float = 1.0,
+    fig_width: Optional[float] = None,
 ) -> Path:
     """Convert a MusicXML file to a PNG visualization."""
     input_path = Path(input_path)
@@ -71,6 +74,9 @@ def convert_musicxml_to_png(
         show_legend=show_legend,
         show_title=show_title,
         write_output=write_output,
+        dpi=dpi,
+        time_stretch=time_stretch,
+        fig_width=fig_width,
     )
 
     return output_path

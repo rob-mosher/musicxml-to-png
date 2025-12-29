@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI flag `--no-output` to exercise the full pipeline without writing a PNG (useful for smoke tests)
 - CLI flag `--skip-ensemble-detection` to suppress ensemble auto-detection (e.g., in CI)
 - CLI flag `--print-ensemble-confidences` to emit raw ensemble confidences for all candidates on one line (debug/pipelines)
+- CLI flag `--time-stretch` to scale timeline width for wider/denser plots
+- CLI flag `--fig-width` to set explicit figure width in inches
+- CLI flag `--dpi` to control output DPI (default 150, clamped 50-600)
 
 ### Changed
 

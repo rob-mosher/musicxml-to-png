@@ -146,6 +146,51 @@ class TestCLIArguments:
         output_file = sample_musicxml_file.with_suffix(".png")
         assert output_file.exists()
 
+    def test_time_stretch_option(self, sample_musicxml_file, tmp_path, capsys):
+        """Test --time-stretch option."""
+        with patch("sys.argv", [
+            "musicxml-to-png",
+            str(sample_musicxml_file),
+            "--time-stretch",
+            "1.2",
+        ]):
+            main()
+
+        output_file = sample_musicxml_file.with_suffix(".png")
+        assert output_file.exists()
+
+    def test_fig_width_option(self, sample_musicxml_file, tmp_path, capsys):
+        """Test --fig-width option."""
+        with patch("sys.argv", [
+            "musicxml-to-png",
+            str(sample_musicxml_file),
+            "--fig-width",
+            "20",
+        ]):
+            main()
+
+        output_file = sample_musicxml_file.with_suffix(".png")
+        assert output_file.exists()
+
+    def test_dpi_option(self, sample_musicxml_file, tmp_path, capsys):
+        """Test --dpi option."""
+        output_path = sample_musicxml_file.with_suffix(".png")
+        with patch("sys.argv", [
+            "musicxml-to-png",
+            str(sample_musicxml_file),
+            "--dpi",
+            "180",
+            "-o",
+            str(output_path),
+        ]):
+            main()
+
+        assert output_path.exists()
+        from PIL import Image
+        dpi_info = Image.open(output_path).info.get("dpi")
+        assert dpi_info is not None
+        assert abs(dpi_info[0] - 180) < 1 and abs(dpi_info[1] - 180) < 1
+
     def test_ensemble_option(self, sample_musicxml_file, tmp_path, capsys):
         """Test --ensemble option."""
         with patch("sys.argv", [

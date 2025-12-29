@@ -164,6 +164,27 @@ Examples:
             "useful for debugging or pipeline parsing."
         ),
     )
+
+    parser.add_argument(
+        "--time-stretch",
+        type=float,
+        default=1.0,
+        help="Scale timeline width (e.g., 1.2 widens, 0.8 tightens).",
+    )
+
+    parser.add_argument(
+        "--fig-width",
+        type=float,
+        default=None,
+        help="Explicit figure width in inches; overrides automatic sizing.",
+    )
+
+    parser.add_argument(
+        "--dpi",
+        type=int,
+        default=150,
+        help="DPI for the output image (e.g., 150, 300).",
+    )
     
     args = parser.parse_args()
     
@@ -222,6 +243,9 @@ Examples:
             show_legend=not args.no_legend,
             show_title=not args.no_title,
             write_output=not args.no_output,
+            time_stretch=args.time_stretch,
+            fig_width=args.fig_width,
+            dpi=args.dpi,
         )
         if not args.no_output:
             print(f"Successfully created visualization: {result_path}")

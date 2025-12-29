@@ -43,6 +43,9 @@ def create_visualization(
     show_legend: bool = True,
     show_title: bool = True,
     write_output: bool = True,
+    time_stretch: float = 1.0,
+    fig_width: Optional[float] = None,
+    dpi: int = 150,
 ) -> None:
     """
     Create a 2D visualization of note events and save as PNG.
@@ -74,10 +77,22 @@ def create_visualization(
     BASE_FIG_HEIGHT = MIN_FIG_HEIGHT
     PITCH_TO_HEIGHT_SLOPE = 0.15
 
-    fig_width = max(MIN_FIG_WIDTH, min(MAX_FIG_WIDTH, BASE_FIG_WIDTH + time_range * TIME_TO_WIDTH_SLOPE))
+    STRETCH_MAX_MULTIPLIER = 10.0
+
+    if fig_width is not None:
+        fig_width = max(1.0, float(fig_width))
+    else:
+        base_width = BASE_FIG_WIDTH + time_range * TIME_TO_WIDTH_SLOPE
+        stretch = float(time_stretch)
+        if stretch != 1.0:
+            capped_stretch = max(0.0, min(STRETCH_MAX_MULTIPLIER, stretch))
+            fig_width = max(1.0, base_width * capped_stretch)
+        else:
+            fig_width = max(MIN_FIG_WIDTH, min(MAX_FIG_WIDTH, base_width))
     fig_height = max(MIN_FIG_HEIGHT, min(MAX_FIG_HEIGHT, BASE_FIG_HEIGHT + pitch_range * PITCH_TO_HEIGHT_SLOPE))
 
-    fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=200)
+    clamped_dpi = max(50, min(600, int(dpi)))
+    fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=clamped_dpi)
 
     family_mode = ensemble in (ENSEMBLE_BIGBAND, ENSEMBLE_ORCHESTRA)
 
@@ -251,6 +266,6 @@ def create_visualization(
 
     plt.tight_layout()
     if write_output:
-        fig.savefig(output_path, dpi=300, bbox_inches="tight")
+        fig.savefig(output_path, dpi=clamped_dpi, bbox_inches="tight")
     plt.close(fig)
 
