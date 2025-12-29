@@ -65,8 +65,17 @@ def create_visualization(
     time_range = max_time - min_time
     pitch_range = max_pitch - min_pitch
 
-    fig_width = max(16, min(24, 14 + time_range * 0.5))
-    fig_height = max(10, min(16, 8 + pitch_range * 0.15))
+    MIN_FIG_WIDTH = 16.0
+    MAX_FIG_WIDTH = 72.0
+    BASE_FIG_WIDTH = MIN_FIG_WIDTH
+    TIME_TO_WIDTH_SLOPE = 0.6
+    MIN_FIG_HEIGHT = 10.0
+    MAX_FIG_HEIGHT = 16.0
+    BASE_FIG_HEIGHT = MIN_FIG_HEIGHT
+    PITCH_TO_HEIGHT_SLOPE = 0.15
+
+    fig_width = max(MIN_FIG_WIDTH, min(MAX_FIG_WIDTH, BASE_FIG_WIDTH + time_range * TIME_TO_WIDTH_SLOPE))
+    fig_height = max(MIN_FIG_HEIGHT, min(MAX_FIG_HEIGHT, BASE_FIG_HEIGHT + pitch_range * PITCH_TO_HEIGHT_SLOPE))
 
     fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=200)
 

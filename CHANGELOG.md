@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Refactored conversion code into focused modules (`models`, `extract`, `visualize`, `converter` orchestration) for maintainability
 - Removed terminal message regarding output when `--no-output` flag present
+- Convert "magic numbers" to descriptive names in visualizer
 
 ### Fixed
 
