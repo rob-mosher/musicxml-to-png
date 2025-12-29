@@ -33,6 +33,7 @@ def convert_musicxml_to_png(
     dpi: int = 150,
     time_stretch: float = 1.0,
     fig_width: Optional[float] = None,
+    split_overlaps: bool = True,
 ) -> Path:
     """Convert a MusicXML file to a PNG visualization."""
     input_path = Path(input_path)
@@ -52,7 +53,12 @@ def convert_musicxml_to_png(
             raise ValueError(f"Failed to parse MusicXML file: {e}") from e
 
     measure_offsets, canonical_duration = build_measure_offset_map(score)
-    note_events = extract_notes(score, ensemble=ensemble, measure_offsets=measure_offsets)
+    note_events = extract_notes(
+        score,
+        ensemble=ensemble,
+        measure_offsets=measure_offsets,
+        split_overlaps=split_overlaps,
+    )
     rehearsal_marks = (
         extract_rehearsal_marks(score, measure_offsets=measure_offsets) if show_rehearsal_marks else []
     )

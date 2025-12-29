@@ -48,6 +48,7 @@ Convert MusicXML files into clean, analyzable PNG visualizations showing tempora
   - Output DPI control: `--dpi` (default 150)
   - No-output mode for smoke tests: `--no-output`
   - Verbose mode for debugging (`-v`/`--verbose`)
+  - Same-pitch stacking is split by default so only overlapping segments thicken; opt out with `--no-overlap-splitting` for the legacy whole-note look
 - Export as high-resolution PNG with user-settable DPI, defaulting to 150 (`--dpi 72`)
 
 ## Getting Your Music into MusicXML

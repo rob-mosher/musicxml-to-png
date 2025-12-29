@@ -84,6 +84,114 @@ def _absolute_offset_from_measure(
     return float(element.getOffsetInHierarchy(score))
 
 
+def _split_events_by_pitch_overlap(note_events: List[NoteEvent]) -> List[NoteEvent]:
+    """
+    Split note events whenever the number of active notes on the same pitch changes,
+    so overlap height only applies to the portion that is truly stacked.
+    """
+    events_by_pitch: Dict[float, List[NoteEvent]] = {}
+    for event in note_events:
+        events_by_pitch.setdefault(event.pitch_midi, []).append(event)
+
+    split_events: List[NoteEvent] = []
+
+    for events in events_by_pitch.values():
+        boundaries = set()
+        for event in events:
+            start = event.start_time
+            end = event.start_time + event.duration
+            boundaries.add(start)
+            boundaries.add(end)
+
+        sorted_boundaries = sorted(boundaries)
+
+        if len(sorted_boundaries) < 2:
+            for event in events:
+                split_events.append(
+                    NoteEvent(
+                        pitch_midi=event.pitch_midi,
+                        start_time=event.start_time,
+                        duration=event.duration,
+                        instrument_family=event.instrument_family,
+                        instrument_label=event.instrument_label,
+                        dynamic_level=event.dynamic_level,
+                        dynamic_mark=event.dynamic_mark,
+                        pitch_overlap=len(events),
+                    )
+                )
+            continue
+
+        for i in range(len(sorted_boundaries) - 1):
+            segment_start = sorted_boundaries[i]
+            segment_end = sorted_boundaries[i + 1]
+            if segment_end <= segment_start:
+                continue
+
+            active_events = [
+                event
+                for event in events
+                if event.start_time < segment_end and (event.start_time + event.duration) > segment_start
+            ]
+            if not active_events:
+                continue
+
+            overlap = len(active_events)
+            for event in active_events:
+                clipped_start = max(segment_start, event.start_time)
+                clipped_end = min(segment_end, event.start_time + event.duration)
+                if clipped_end <= clipped_start:
+                    continue
+
+                split_events.append(
+                    NoteEvent(
+                        pitch_midi=event.pitch_midi,
+                        start_time=clipped_start,
+                        duration=clipped_end - clipped_start,
+                        instrument_family=event.instrument_family,
+                        instrument_label=event.instrument_label,
+                        dynamic_level=event.dynamic_level,
+                        dynamic_mark=event.dynamic_mark,
+                        pitch_overlap=overlap,
+                    )
+                )
+
+    split_events.sort(key=lambda e: (e.start_time, e.pitch_midi, e.instrument_label))
+
+    return split_events
+
+
+def _assign_pitch_overlap_unsplit(note_events: List[NoteEvent]) -> List[NoteEvent]:
+    """
+    Legacy behavior: mark pitch_overlap on entire notes without splitting them.
+    """
+    overlap_counts = [1] * len(note_events)
+    events_by_pitch: Dict[float, List[tuple[int, NoteEvent]]] = {}
+    for idx, event in enumerate(note_events):
+        events_by_pitch.setdefault(event.pitch_midi, []).append((idx, event))
+
+    for events in events_by_pitch.values():
+        events.sort(key=lambda item: (item[1].start_time, item[0]))
+        active: List[tuple[int, float]] = []
+        for idx, event in events:
+            current_start = event.start_time
+            current_end = event.start_time + event.duration
+            active = [(i, end) for i, end in active if end > current_start]
+            current_overlap = len(active) + 1
+            overlap_counts[idx] = max(overlap_counts[idx], current_overlap)
+
+            updated_active: List[tuple[int, float]] = []
+            for active_idx, end_time in active:
+                overlap_counts[active_idx] = max(overlap_counts[active_idx], current_overlap)
+                updated_active.append((active_idx, end_time))
+            updated_active.append((idx, current_end))
+            active = updated_active
+
+    for idx, event in enumerate(note_events):
+        event.pitch_overlap = overlap_counts[idx]
+
+    return note_events
+
+
 def extract_rehearsal_marks(
     score: stream.Score,
     measure_offsets: Optional[Dict[str, float]] = None,
@@ -112,6 +220,7 @@ def extract_notes(
     score: stream.Score,
     ensemble: str,
     measure_offsets: Optional[Dict[str, float]] = None,
+    split_overlaps: bool = True,
 ) -> List[NoteEvent]:
     """
     Extract note events from a music21 Score.
@@ -295,35 +404,11 @@ def extract_notes(
                 )
                 processed_indices.add(i)
 
-    overlap_counts = [1] * len(note_events)
-    events_by_pitch: Dict[float, List[tuple[int, NoteEvent]]] = {}
-    for idx, event in enumerate(note_events):
-        events_by_pitch.setdefault(event.pitch_midi, []).append((idx, event))
-
-    for events in events_by_pitch.values():
-        events.sort(key=lambda item: (item[1].start_time, item[0]))
-        active: List[tuple[int, float]] = []
-        for idx, event in events:
-            current_start = event.start_time
-            current_end = event.start_time + event.duration
-            active = [(i, end) for i, end in active if end > current_start]
-            current_overlap = len(active) + 1
-            overlap_counts[idx] = max(overlap_counts[idx], current_overlap)
-
-            updated_active: List[tuple[int, float]] = []
-            for active_idx, end_time in active:
-                overlap_counts[active_idx] = max(overlap_counts[active_idx], current_overlap)
-                updated_active.append((active_idx, end_time))
-            updated_active.append((idx, current_end))
-            active = updated_active
-
-    for idx, event in enumerate(note_events):
-        event.pitch_overlap = overlap_counts[idx]
-
-    return note_events
+    if split_overlaps:
+        return _split_events_by_pitch_overlap(note_events)
+    return _assign_pitch_overlap_unsplit(note_events)
 
 
 # Public aliases for external imports
 build_measure_offset_map = _build_measure_offset_map
 absolute_offset_from_measure = _absolute_offset_from_measure
-

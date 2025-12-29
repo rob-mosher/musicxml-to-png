@@ -185,6 +185,15 @@ Examples:
         default=150,
         help="DPI for the output image (e.g., 150, 300).",
     )
+
+    parser.add_argument(
+        "--no-overlap-splitting",
+        action="store_true",
+        help=(
+            "Keep stacked height for the entire note when any portion overlaps on the same pitch "
+            "(legacy behavior). Default is to split and only thicken the overlapping segments."
+        ),
+    )
     
     args = parser.parse_args()
     
@@ -246,6 +255,7 @@ Examples:
             time_stretch=args.time_stretch,
             fig_width=args.fig_width,
             dpi=args.dpi,
+            split_overlaps=not args.no_overlap_splitting,
         )
         if not args.no_output:
             print(f"Successfully created visualization: {result_path}")

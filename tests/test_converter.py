@@ -411,8 +411,64 @@ class TestExtractNotes:
         score.insert(0, part2)
 
         note_events = extract_notes(score, ensemble=ENSEMBLE_ORCHESTRA)
+        assert len(note_events) == 3
+
+        events_by_label = {}
+        for event in note_events:
+            events_by_label.setdefault(event.instrument_label, []).append(event)
+
+        assert set(events_by_label) == {"Flute", "Clarinet"}
+
+        clarinet_event = events_by_label["Clarinet"][0]
+        assert clarinet_event.start_time == 0.0
+        assert clarinet_event.duration == 1.0
+        assert clarinet_event.pitch_overlap == 2
+
+        flute_events = sorted(events_by_label["Flute"], key=lambda e: e.start_time)
+        assert len(flute_events) == 2
+        assert flute_events[0].start_time == 0.0
+        assert flute_events[0].duration == 1.0
+        assert flute_events[0].pitch_overlap == 2
+        assert flute_events[1].start_time == 1.0
+        assert flute_events[1].duration == 1.0
+        assert flute_events[1].pitch_overlap == 1
+
+    def test_pitch_overlap_legacy_mode_without_splitting(self):
+        """Legacy behavior keeps entire note thick when any portion overlaps."""
+        score = stream.Score()
+
+        part1 = stream.Part()
+        part1.append(instrument.Flute())
+        n1 = note.Note("C4")
+        n1.quarterLength = 2.0
+        part1.append(n1)
+        score.insert(0, part1)
+
+        part2 = stream.Part()
+        part2.append(instrument.Clarinet())
+        n2 = note.Note("C4")
+        n2.quarterLength = 1.0
+        part2.append(n2)
+        score.insert(0, part2)
+
+        note_events = extract_notes(score, ensemble=ENSEMBLE_ORCHESTRA, split_overlaps=False)
         assert len(note_events) == 2
-        assert all(event.pitch_overlap == 2 for event in note_events)
+
+        events_by_label = {}
+        for event in note_events:
+            events_by_label.setdefault(event.instrument_label, []).append(event)
+
+        assert set(events_by_label) == {"Flute", "Clarinet"}
+
+        clarinet_event = events_by_label["Clarinet"][0]
+        assert clarinet_event.start_time == 0.0
+        assert clarinet_event.duration == 1.0
+        assert clarinet_event.pitch_overlap == 2
+
+        flute_event = events_by_label["Flute"][0]
+        assert flute_event.start_time == 0.0
+        assert flute_event.duration == 2.0
+        assert flute_event.pitch_overlap == 2
 
     def test_percussion_offsets_align_with_other_parts(self):
         """Percussion (timpani) should align with winds/strings when measures differ."""

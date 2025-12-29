@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Default overlap splitting for stacked same-pitch notes so only the truly simultaneous segments use thicker bars.
+- CLI flag `--no-overlap-splitting` (and library argument `split_overlaps`) to opt into legacy whole-note stacking; default remains splitting so only truly overlapping segments are thickened.
+
 ## [0.4.0] - 2025-12-29
 
 ### Added
