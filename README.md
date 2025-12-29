@@ -1,12 +1,12 @@
 # musicxml-to-png
 
-A tool for human-AI musical collaboration
+Visualize and analyze MusicXML scores for humans, classrooms, and AI workflows
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/rob-mosher/musicxml-to-png/v0.3.0/docs/images/screenshot.png" alt="Example visualization showing MusicXML converted to PNG" width="100%" style="max-width: 1200px;">
 </div>
 
-MusicXML is rich and expressive for human-facing notation software, but challenging for AI systems to "see" structurally. This tool bridges that gap by converting MusicXML files into visual representations that both humans and AI can analyze together. Designed for composers, arrangers, educators, and anyone exploring human-AI collaboration in music.
+MusicXML is rich and expressive for human-facing notation software, but challenging to scan at a glance or share with AI systems. This tool converts MusicXML into clear visual timelines and pitch maps for score study, arrangement review, education, and pipeline integration—while still making it easy for humans and AI to explore music side by side.
 
 ## Quick Start
 
