@@ -441,6 +441,7 @@ def create_visualization(
     ensemble: str = ENSEMBLE_UNGROUPED,
     rehearsal_marks: Optional[List[RehearsalMark]] = None,
     show_legend: bool = True,
+    show_title: bool = True,
 ) -> None:
     """
     Create a 2D visualization of note events and save as PNG.
@@ -537,7 +538,7 @@ def create_visualization(
         ax.set_xlabel("Time (beats)", fontsize=12)
         ax.set_ylabel("Pitch (MIDI note number)", fontsize=12)
     
-    if title and not minimal:
+    if title and not minimal and show_title:
         ax.set_title(title, fontsize=14, fontweight="bold")
     
     # Set axis limits with minimal padding for maximum detail
@@ -684,6 +685,7 @@ def convert_musicxml_to_png(
     ensemble: str = ENSEMBLE_UNGROUPED,
     show_rehearsal_marks: bool = True,
     show_legend: bool = True,
+    show_title: bool = True,
 ) -> Path:
     """
     Convert a MusicXML file to a PNG visualization.
@@ -746,13 +748,14 @@ def convert_musicxml_to_png(
     create_visualization(
         note_events,
         output_path,
-        title,
+        title if show_title else None,
         score_duration,
         show_grid,
         minimal,
         ensemble,
         rehearsal_marks=rehearsal_marks,
         show_legend=show_legend,
+        show_title=show_title,
     )
     
     return output_path

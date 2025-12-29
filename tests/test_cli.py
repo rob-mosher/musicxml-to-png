@@ -131,6 +131,18 @@ class TestCLIArguments:
         output_file = sample_musicxml_file.with_suffix(".png")
         assert output_file.exists()
 
+    def test_no_title_flag(self, sample_musicxml_file, tmp_path, capsys):
+        """Test --no-title option."""
+        with patch("sys.argv", [
+            "musicxml-to-png",
+            str(sample_musicxml_file),
+            "--no-title",
+        ]):
+            main()
+
+        output_file = sample_musicxml_file.with_suffix(".png")
+        assert output_file.exists()
+
     def test_ensemble_option(self, sample_musicxml_file, tmp_path, capsys):
         """Test --ensemble option."""
         with patch("sys.argv", [

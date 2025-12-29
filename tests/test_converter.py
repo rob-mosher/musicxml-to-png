@@ -709,6 +709,22 @@ class TestConvertMusicxmlToPng:
         output_path = convert_musicxml_to_png(input_path, show_legend=False)
         assert output_path.exists()
 
+    def test_disable_title(self, tmp_path):
+        """Conversion should succeed with title disabled."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Violin())
+        n = note.Note("C4")
+        n.quarterLength = 1.0
+        part.append(n)
+        score.append(part)
+
+        input_path = tmp_path / "test.mxl"
+        score.write("musicxml", input_path)
+
+        output_path = convert_musicxml_to_png(input_path, show_title=False)
+        assert output_path.exists()
+
     def test_custom_title(self, tmp_path):
         """Test conversion with custom title."""
         score = stream.Score()

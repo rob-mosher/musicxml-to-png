@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Visualization can display MusicXML rehearsal marks as labeled timeline guides
 - CLI flag `--no-rehearsal-marks` to suppress rehearsal mark rendering
 - CLI flag `--no-legend` to disable legend rendering
+- CLI flag `--no-title` to omit the plot title
 
 ### Fixed
 

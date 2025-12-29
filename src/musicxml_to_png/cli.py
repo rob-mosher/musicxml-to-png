@@ -78,6 +78,12 @@ Examples:
         action="store_true",
         help="Disable the legend in the visualization",
     )
+
+    parser.add_argument(
+        "--no-title",
+        action="store_true",
+        help="Disable the plot title (otherwise uses filename or --title)",
+    )
     
     parser.add_argument(
         "--ensemble",
@@ -143,6 +149,7 @@ Examples:
             ensemble=args.ensemble,
             show_rehearsal_marks=not args.no_rehearsal_marks,
             show_legend=not args.no_legend,
+            show_title=not args.no_title,
         )
         print(f"Successfully created visualization: {result_path}")
     except FileNotFoundError as e:
