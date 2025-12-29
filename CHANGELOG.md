@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI flag `--no-legend` to disable legend rendering
 - CLI flag `--no-title` to omit the plot title
 
+### Changed
+
+- Refactored conversion code into focused modules (`models`, `extract`, `visualize`, `converter` orchestration) for maintainability
+
 ### Fixed
 
 - Aligned part offsets using a shared, canonical measure map to prevent percussion (e.g., timpani) from drifting late when bar durations are missing or inflated; added `test-orchestra-2.mxl` fixture and regression test to lock timing

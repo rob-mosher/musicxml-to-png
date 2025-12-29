@@ -6,12 +6,14 @@ import tempfile
 import pytest
 from music21 import stream, note, instrument, chord, pitch, tie, dynamics, converter, expressions
 
-from musicxml_to_png.converter import (
+from musicxml_to_png.converter import convert_musicxml_to_png
+from musicxml_to_png.extract import (
     extract_notes,
     extract_rehearsal_marks,
-    create_visualization,
-    convert_musicxml_to_png,
-    _build_measure_offset_map,
+    build_measure_offset_map,
+)
+from musicxml_to_png.visualize import create_visualization
+from musicxml_to_png.models import (
     NoteEvent,
     RehearsalMark,
     DEFAULT_DYNAMIC_LEVEL,
@@ -451,7 +453,7 @@ class TestExtractNotes:
         part2.append(m2b)
         score.append(part2)
 
-        measure_offsets, _ = _build_measure_offset_map(score)
+        measure_offsets, _ = build_measure_offset_map(score)
         marks = extract_rehearsal_marks(score, measure_offsets=measure_offsets)
 
         assert len(marks) == 1
@@ -463,7 +465,7 @@ class TestExtractNotes:
         """Fixture bigband file should expose rehearsal marks A-H in order."""
         fixture_path = Path(__file__).parent / "fixtures" / "test-bigband-1.mxl"
         score = converter.parse(str(fixture_path))
-        measure_offsets, _ = _build_measure_offset_map(score)
+        measure_offsets, _ = build_measure_offset_map(score)
 
         marks = extract_rehearsal_marks(score, measure_offsets=measure_offsets)
         labels = [m.label for m in marks]
