@@ -823,3 +823,22 @@ class TestConvertMusicxmlToPng:
         
         output_path = convert_musicxml_to_png(input_path, minimal=True)
         assert output_path.exists()
+
+    def test_no_output_skips_writing_file(self, tmp_path):
+        """Conversion pipeline should run without writing output when requested."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Violin())
+        n = note.Note("C4")
+        n.quarterLength = 1.0
+        part.append(n)
+        score.append(part)
+
+        input_path = tmp_path / "test.mxl"
+        score.write("musicxml", input_path)
+
+        output_path = convert_musicxml_to_png(input_path, write_output=False)
+
+        # Should still return the default output path, but file is intentionally absent
+        assert output_path == input_path.with_suffix(".png")
+        assert not output_path.exists()

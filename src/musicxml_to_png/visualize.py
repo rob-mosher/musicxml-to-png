@@ -42,6 +42,7 @@ def create_visualization(
     rehearsal_marks: Optional[List[RehearsalMark]] = None,
     show_legend: bool = True,
     show_title: bool = True,
+    write_output: bool = True,
 ) -> None:
     """
     Create a 2D visualization of note events and save as PNG.
@@ -240,6 +241,7 @@ def create_visualization(
         ax.set_axisbelow(True)
 
     plt.tight_layout()
-    fig.savefig(output_path, dpi=300, bbox_inches="tight")
+    if write_output:
+        fig.savefig(output_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
 

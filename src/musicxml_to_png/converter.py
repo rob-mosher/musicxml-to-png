@@ -28,6 +28,7 @@ def convert_musicxml_to_png(
     show_rehearsal_marks: bool = True,
     show_legend: bool = True,
     show_title: bool = True,
+    write_output: bool = True,
 ) -> Path:
     """Convert a MusicXML file to a PNG visualization."""
     input_path = Path(input_path)
@@ -67,6 +68,7 @@ def convert_musicxml_to_png(
         rehearsal_marks=rehearsal_marks,
         show_legend=show_legend,
         show_title=show_title,
+        write_output=write_output,
     )
 
     return output_path

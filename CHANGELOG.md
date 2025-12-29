@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI flag `--no-rehearsal-marks` to suppress rehearsal mark rendering
 - CLI flag `--no-legend` to disable legend rendering
 - CLI flag `--no-title` to omit the plot title
+- CLI flag `--no-output` to exercise the full pipeline without writing a PNG (useful for smoke tests)
 
 ### Changed
 

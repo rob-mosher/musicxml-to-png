@@ -84,6 +84,12 @@ Examples:
         action="store_true",
         help="Disable the plot title (otherwise uses filename or --title)",
     )
+
+    parser.add_argument(
+        "--no-output",
+        action="store_true",
+        help="Run the full pipeline without writing a PNG (useful for smoke tests)",
+    )
     
     parser.add_argument(
         "--ensemble",
@@ -150,8 +156,15 @@ Examples:
             show_rehearsal_marks=not args.no_rehearsal_marks,
             show_legend=not args.no_legend,
             show_title=not args.no_title,
+            write_output=not args.no_output,
         )
-        print(f"Successfully created visualization: {result_path}")
+        if args.no_output:
+            print(
+                "Conversion completed without writing output (--no-output). "
+                f"Would have saved to: {result_path}"
+            )
+        else:
+            print(f"Successfully created visualization: {result_path}")
     except FileNotFoundError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
