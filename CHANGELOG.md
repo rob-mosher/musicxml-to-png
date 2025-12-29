@@ -7,11 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2025-12-29
+
 ### Added
 
-- Visualization can display MusicXML rehearsal marks as labeled timeline guides
-- CLI now auto-detects likely ensembles (orchestra/bigband/ungrouped) and prints suggestions when using the default ensemble
-- Ensemble detection suggestions now print one line per detected ensemble with explicit `"--ensemble <name>"` hint, prefixed with `Info:` and non-impacting to output
+- Auto-detect likely ensembles (orchestra/bigband/etc) and prints suggestions when no ensemble specified
+- Visualization can display MusicXML rehearsal marks as labeled timeline guides (omit with `--no-rehearsal-marks`)
 - CLI flag `--version` to print the tool version (short `-v` remains verbose)
 - CLI flag `--no-rehearsal-marks` to suppress rehearsal mark rendering
 - CLI flag `--no-legend` to disable legend rendering
@@ -126,6 +127,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Virtual environment setup and dependency management
 - MIT License
 
+[0.4.0]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.4.0
 [0.3.0]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.3.0
 [0.2.3]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.2.3
 [0.2.2]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.2.2
