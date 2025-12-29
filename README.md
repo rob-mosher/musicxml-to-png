@@ -1,6 +1,6 @@
 # musicxml-to-png
 
-Visualize and analyze MusicXML scores for humans, classrooms, and AI workflows
+Visualize and analyze MusicXML scores for humans, classrooms, and AI collaborations/workflows
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/rob-mosher/musicxml-to-png/v0.4.0/docs/images/screenshot.png" alt="Example visualization showing MusicXML converted to PNG" width="100%" style="max-width: 1200px;">
