@@ -7,6 +7,7 @@ from pathlib import Path
 
 from music21.musicxml.xmlToM21 import MusicXMLWarning
 
+from musicxml_to_png import __version__
 from musicxml_to_png.converter import convert_musicxml_to_png
 from musicxml_to_png.instruments import (
     ENSEMBLE_UNGROUPED,
@@ -82,6 +83,13 @@ Examples:
         "--verbose",
         action="store_true",
         help="Show music21 warnings and other diagnostic information",
+    )
+
+    parser.add_argument(
+        "--version",
+        action="version",
+        version="%(prog)s " + __version__,
+        help="Show the musicxml-to-png version and exit",
     )
     
     args = parser.parse_args()

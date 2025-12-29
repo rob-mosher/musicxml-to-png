@@ -127,6 +127,16 @@ class TestCLIArguments:
         output_file = sample_musicxml_file.with_suffix(".png")
         assert output_file.exists()
 
+    def test_version_flag(self, capsys):
+        """--version should print version and exit cleanly."""
+        with patch("sys.argv", ["musicxml-to-png", "--version"]):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+        assert exc_info.value.code == 0
+        captured = capsys.readouterr()
+        assert "musicxml-to-png" in captured.out
+        assert any(char.isdigit() for char in captured.out)
+
 
 class TestCLIErrorHandling:
     """Test CLI error handling."""
@@ -215,4 +225,3 @@ class TestCLIErrorHandling:
         
         output_file = sample_musicxml_file.with_suffix(".png")
         assert output_file.exists()
-
