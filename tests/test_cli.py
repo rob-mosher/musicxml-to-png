@@ -91,6 +91,34 @@ class TestCLIArguments:
         output_file = sample_musicxml_file.with_suffix(".png")
         assert output_file.exists()
 
+    def test_no_rehearsal_marks_flag(self, sample_musicxml_file, tmp_path, capsys):
+        """Test --no-rehearsal-marks option."""
+        with patch("sys.argv", [
+            "musicxml-to-png",
+            str(sample_musicxml_file),
+            "--no-rehearsal-marks",
+        ]):
+            main()
+        
+        output_file = sample_musicxml_file.with_suffix(".png")
+        assert output_file.exists()
+
+    def test_no_rehearsal_marks_flag_bigband_fixture(self, tmp_path, capsys):
+        """Bigband fixture should convert with rehearsal marks suppressed."""
+        fixture_path = Path(__file__).parent / "fixtures" / "test-bigband-1.mxl"
+        if not fixture_path.exists():
+            pytest.skip("test-bigband-1.mxl fixture missing")
+
+        with patch("sys.argv", [
+            "musicxml-to-png",
+            str(fixture_path),
+            "--no-rehearsal-marks",
+        ]):
+            main()
+
+        output_file = fixture_path.with_suffix(".png")
+        assert output_file.exists()
+
     def test_ensemble_option(self, sample_musicxml_file, tmp_path, capsys):
         """Test --ensemble option."""
         with patch("sys.argv", [

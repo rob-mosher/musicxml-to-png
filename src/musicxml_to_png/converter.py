@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-from music21 import converter, stream, note, instrument, pitch, chord, dynamics
+from music21 import converter, stream, note, instrument, pitch, chord, dynamics, expressions
 
 from musicxml_to_png.instruments import (
     get_instrument_family,
@@ -55,6 +55,14 @@ class NoteEvent:
         self.dynamic_mark = dynamic_mark
         # Count of simultaneous notes at the same pitch (1 = solo)
         self.pitch_overlap = pitch_overlap
+
+
+class RehearsalMark:
+    """Represents a rehearsal letter/number placed on the timeline."""
+
+    def __init__(self, label: str, start_time: float):
+        self.label = label
+        self.start_time = start_time
 
 
 # Approximated loudness values for common dynamics, clamped to a sane range
@@ -127,6 +135,51 @@ def _build_measure_offset_map(score: stream.Score) -> tuple[Dict[str, float], fl
     return measure_offsets, current_offset
 
 
+def _absolute_offset_from_measure(
+    element,
+    score: stream.Score,
+    measure_offsets: Dict[str, float],
+) -> float:
+    """
+    Compute an absolute offset using canonical measure offsets when available.
+    Falls back to music21 hierarchy offsets if the measure is unknown.
+    """
+    measure = element.getContextByClass(stream.Measure)
+    measure_num = measure.number if measure is not None else getattr(element, "measureNumber", None)
+    inner_offset = float(getattr(element, "offset", 0.0))
+
+    if measure_num is not None:
+        key = str(measure_num)
+        if key in measure_offsets:
+            return measure_offsets[key] + inner_offset
+
+    return float(element.getOffsetInHierarchy(score))
+
+
+def extract_rehearsal_marks(
+    score: stream.Score,
+    measure_offsets: Optional[Dict[str, float]] = None,
+) -> List[RehearsalMark]:
+    """
+    Extract rehearsal marks (letters/numbers) from the first part of the score.
+    """
+    if not score.parts:
+        return []
+
+    measure_offsets = measure_offsets or _build_measure_offset_map(score)[0]
+    part = score.parts[0]
+    rehearsal_marks: List[RehearsalMark] = []
+
+    for mark in part.recurse().getElementsByClass(expressions.RehearsalMark):
+        label = str(mark.content).strip() if getattr(mark, "content", None) else str(mark).strip()
+        if not label:
+            continue
+        start_time = _absolute_offset_from_measure(mark, score, measure_offsets)
+        rehearsal_marks.append(RehearsalMark(label=label, start_time=start_time))
+
+    return rehearsal_marks
+
+
 def extract_notes(
     score: stream.Score,
     ensemble: str = ENSEMBLE_UNGROUPED,
@@ -145,16 +198,6 @@ def extract_notes(
     measure_offsets, _ = (
         _build_measure_offset_map(score) if measure_offsets is None else (measure_offsets, None)
     )
-
-    def _absolute_offset(element) -> float:
-        """Compute a stable absolute offset using measure offsets when available."""
-        measure_num = getattr(element, "measureNumber", None)
-        if measure_num is not None:
-            key = str(measure_num)
-            if key in measure_offsets:
-                return measure_offsets[key] + float(getattr(element, "offset", 0.0))
-        # Fallback to music21's hierarchical offset if we could not resolve
-        return float(element.getOffsetInHierarchy(score))
 
     note_events = []
     instrument_label_counts = {}
@@ -206,7 +249,7 @@ def extract_notes(
         
         for element in part.recurse().notes:
             # Get absolute offset from the start of the score
-            absolute_offset = _absolute_offset(element)
+            absolute_offset = _absolute_offset_from_measure(element, score, measure_offsets)
             
             if isinstance(element, note.Note):
                 # Single note
@@ -249,7 +292,7 @@ def extract_notes(
         # Build a simple dynamic timeline for this part so we can grab the most recent marking
         dynamic_timeline = []
         for dyn in part.recurse().getElementsByClass(dynamics.Dynamic):
-            dyn_offset = _absolute_offset(dyn)
+            dyn_offset = _absolute_offset_from_measure(dyn, score, measure_offsets)
             dyn_mark = None
             if hasattr(dyn, "value") and dyn.value is not None:
                 dyn_mark = str(dyn.value).lower()
@@ -396,6 +439,7 @@ def create_visualization(
     show_grid: bool = True,
     minimal: bool = False,
     ensemble: str = ENSEMBLE_UNGROUPED,
+    rehearsal_marks: Optional[List[RehearsalMark]] = None,
 ) -> None:
     """
     Create a 2D visualization of note events and save as PNG.
@@ -410,6 +454,7 @@ def create_visualization(
         show_grid: Whether to display grid lines (default: True)
         minimal: If True, removes labels, legend, title, and borders (default: False)
         ensemble: Ensemble type (ungrouped, orchestra, or bigband)
+        rehearsal_marks: Optional list of rehearsal marks to annotate
     """
     if not note_events:
         raise ValueError("No notes found in the MusicXML file")
@@ -497,8 +542,9 @@ def create_visualization(
     # Set axis limits with minimal padding for maximum detail
     pitch_padding = max(1, pitch_range * 0.05)  # 5% padding or 1 semitone minimum
     time_padding = max(0.5, time_range * 0.02)  # 2% padding or 0.5 beat minimum
+    extra_top_padding = 0.0 if minimal or not rehearsal_marks else max(1.0, pitch_range * 0.08)
     
-    ax.set_ylim(min_pitch - pitch_padding, max_pitch + pitch_padding)
+    ax.set_ylim(min_pitch - pitch_padding, max_pitch + pitch_padding + extra_top_padding)
     ax.set_xlim(min_time - time_padding, max_time + time_padding)
     
     # Create fine-grained grid based on smallest note duration
@@ -543,6 +589,29 @@ def create_visualization(
         ax.tick_params(left=False, bottom=False, top=False, right=False, 
                       labelleft=False, labelbottom=False, labeltop=False, labelright=False,
                       length=0, width=0)
+
+    # Rehearsal marks: vertical guides with labels near the top of the plot
+    if rehearsal_marks and not minimal:
+        label_y = max_pitch + pitch_padding + extra_top_padding * 0.5
+        for mark in rehearsal_marks:
+            ax.axvline(
+                mark.start_time,
+                color="black",
+                alpha=0.35,
+                linestyle="--",
+                linewidth=0.9,
+                zorder=0.5,
+            )
+            ax.text(
+                mark.start_time,
+                label_y,
+                mark.label,
+                ha="center",
+                va="bottom",
+                fontsize=10,
+                fontweight="bold",
+                bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="gray", alpha=0.7),
+            )
     
     # Create legend
     legend_elements = []
@@ -612,6 +681,7 @@ def convert_musicxml_to_png(
     show_grid: bool = True,
     minimal: bool = False,
     ensemble: str = ENSEMBLE_UNGROUPED,
+    show_rehearsal_marks: bool = True,
 ) -> Path:
     """
     Convert a MusicXML file to a PNG visualization.
@@ -656,6 +726,11 @@ def convert_musicxml_to_png(
 
     # Extract note events using the canonical measure offsets
     note_events = extract_notes(score, ensemble=ensemble, measure_offsets=measure_offsets)
+
+    # Extract rehearsal marks (letters/numbers) using the same canonical offsets
+    rehearsal_marks = (
+        extract_rehearsal_marks(score, measure_offsets=measure_offsets) if show_rehearsal_marks else []
+    )
     
     # Use the canonical duration derived from the measure map to cover the
     # full score length, falling back to the score duration if unavailable.
@@ -666,6 +741,15 @@ def convert_musicxml_to_png(
         title = input_path.stem
     
     # Create visualization
-    create_visualization(note_events, output_path, title, score_duration, show_grid, minimal, ensemble)
+    create_visualization(
+        note_events,
+        output_path,
+        title,
+        score_duration,
+        show_grid,
+        minimal,
+        ensemble,
+        rehearsal_marks=rehearsal_marks,
+    )
     
     return output_path

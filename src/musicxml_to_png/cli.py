@@ -66,6 +66,12 @@ Examples:
         action="store_true",
         help="Remove all labels, legend, title, and borders for a clean visualization",
     )
+
+    parser.add_argument(
+        "--no-rehearsal-marks",
+        action="store_true",
+        help="Disable rendering rehearsal letters/numbers on the timeline",
+    )
     
     parser.add_argument(
         "--ensemble",
@@ -129,6 +135,7 @@ Examples:
             show_grid=not args.no_grid,
             minimal=args.minimal,
             ensemble=args.ensemble,
+            show_rehearsal_marks=not args.no_rehearsal_marks,
         )
         print(f"Successfully created visualization: {result_path}")
     except FileNotFoundError as e:

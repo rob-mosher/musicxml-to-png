@@ -4,13 +4,16 @@ from pathlib import Path
 import tempfile
 
 import pytest
-from music21 import stream, note, instrument, chord, pitch, tie, dynamics, converter
+from music21 import stream, note, instrument, chord, pitch, tie, dynamics, converter, expressions
 
 from musicxml_to_png.converter import (
     extract_notes,
+    extract_rehearsal_marks,
     create_visualization,
     convert_musicxml_to_png,
+    _build_measure_offset_map,
     NoteEvent,
+    RehearsalMark,
     DEFAULT_DYNAMIC_LEVEL,
     MIN_DYNAMIC_LEVEL,
     MAX_DYNAMIC_LEVEL,
@@ -423,6 +426,50 @@ class TestExtractNotes:
         # The timpani should enter around measure 11 (~20.5 beats), not after beat 40
         assert 20.0 <= first_timp <= 21.0
 
+    def test_rehearsal_marks_use_canonical_measure_offsets(self):
+        """Rehearsal marks should respect shared measure timeline (shortest bars)."""
+        score = stream.Score()
+
+        # Part 1 (longer bars)
+        part1 = stream.Part()
+        m1 = stream.Measure(number=1)
+        m1.append(note.Rest(quarterLength=4.0))
+        part1.append(m1)
+        m2 = stream.Measure(number=2)
+        m2.insert(0.0, expressions.RehearsalMark("B"))
+        m2.append(note.Rest(quarterLength=4.0))
+        part1.append(m2)
+        score.append(part1)
+
+        # Part 2 (shorter, canonical bars)
+        part2 = stream.Part()
+        m1b = stream.Measure(number=1)
+        m1b.append(note.Rest(quarterLength=2.0))
+        part2.append(m1b)
+        m2b = stream.Measure(number=2)
+        m2b.append(note.Rest(quarterLength=2.0))
+        part2.append(m2b)
+        score.append(part2)
+
+        measure_offsets, _ = _build_measure_offset_map(score)
+        marks = extract_rehearsal_marks(score, measure_offsets=measure_offsets)
+
+        assert len(marks) == 1
+        assert marks[0].label == "B"
+        # Canonical measure length for measure 1 and 2 is 2.0 (from part2), so mark at start of measure 2 -> offset 2.0
+        assert marks[0].start_time == 2.0
+
+    def test_rehearsal_marks_from_bigband_fixture(self):
+        """Fixture bigband file should expose rehearsal marks A-H in order."""
+        fixture_path = Path(__file__).parent / "fixtures" / "test-bigband-1.mxl"
+        score = converter.parse(str(fixture_path))
+        measure_offsets, _ = _build_measure_offset_map(score)
+
+        marks = extract_rehearsal_marks(score, measure_offsets=measure_offsets)
+        labels = [m.label for m in marks]
+
+        assert labels[:8] == ["A", "B", "C", "D", "E", "F", "G", "H"]
+
 
 class TestCreateVisualization:
     """Test visualization creation."""
@@ -540,6 +587,24 @@ class TestCreateVisualization:
         create_visualization(note_events, output_path, title="Test Composition", ensemble=ENSEMBLE_ORCHESTRA)
         assert output_path.exists()
 
+    def test_rehearsal_marks_render(self, tmp_path):
+        """Visualization should accept rehearsal marks without error."""
+        output_path = tmp_path / "output.png"
+        
+        note_events = [
+            NoteEvent(pitch_midi=60.0, start_time=0.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS),
+        ]
+        rehearsal_marks = [RehearsalMark(label="A", start_time=0.0), RehearsalMark(label="B", start_time=2.0)]
+        
+        create_visualization(
+            note_events,
+            output_path,
+            title="Rehearsal Test",
+            ensemble=ENSEMBLE_ORCHESTRA,
+            rehearsal_marks=rehearsal_marks,
+        )
+        assert output_path.exists()
+
     def test_score_duration_parameter(self, tmp_path):
         """Test that score_duration parameter affects time range."""
         output_path = tmp_path / "output.png"
@@ -612,6 +677,20 @@ class TestConvertMusicxmlToPng:
         result_path = convert_musicxml_to_png(input_path, output_path=output_path)
         
         assert result_path == output_path
+        assert output_path.exists()
+
+    def test_disable_rehearsal_marks(self, tmp_path):
+        """Conversion should succeed with rehearsal marks disabled."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Violin())
+        part.append(note.Note("C4"))
+        score.append(part)
+
+        input_path = tmp_path / "test.mxl"
+        score.write("musicxml", input_path)
+
+        output_path = convert_musicxml_to_png(input_path, show_rehearsal_marks=False)
         assert output_path.exists()
 
     def test_custom_title(self, tmp_path):
