@@ -158,12 +158,7 @@ Examples:
             show_title=not args.no_title,
             write_output=not args.no_output,
         )
-        if args.no_output:
-            print(
-                "Conversion completed without writing output (--no-output). "
-                f"Would have saved to: {result_path}"
-            )
-        else:
+        if not args.no_output:
             print(f"Successfully created visualization: {result_path}")
     except FileNotFoundError as e:
         print(f"Error: {e}", file=sys.stderr)
