@@ -243,6 +243,42 @@ Examples:
         action="store_true",
         help="Show curved lines connecting adjacent notes (no rest between) within each instrument.",
     )
+    parser.add_argument(
+        "--connection-max-gap",
+        type=float,
+        default=None,
+        help="Skip drawing connection lines when the gap from note end to next start exceeds this many beats (advanced).",
+    )
+    parser.add_argument(
+        "--connection-alpha",
+        type=float,
+        default=None,
+        help="Base opacity for short connection lines (default 0.6, advanced).",
+    )
+    parser.add_argument(
+        "--connection-min-alpha",
+        type=float,
+        default=None,
+        help="Minimum opacity for long connection lines after fading (default 0.25, advanced).",
+    )
+    parser.add_argument(
+        "--connection-fade-start",
+        type=float,
+        default=None,
+        help="Length in beats where connection line fading begins (default 4.0, advanced).",
+    )
+    parser.add_argument(
+        "--connection-fade-end",
+        type=float,
+        default=None,
+        help="Length in beats where connection line fading reaches minimum opacity (default 8.0, advanced).",
+    )
+    parser.add_argument(
+        "--connection-linewidth",
+        type=float,
+        default=None,
+        help="Line width for connection lines (default 1.0, advanced).",
+    )
     
     args = parser.parse_args()
     
@@ -340,6 +376,12 @@ Examples:
             timeline_unit=args.timeline_unit,
             transparent=args.transparent,
             show_connections=args.show_connections,
+            connection_max_gap=args.connection_max_gap,
+            connection_alpha=args.connection_alpha,
+            connection_min_alpha=args.connection_min_alpha,
+            connection_fade_start=args.connection_fade_start,
+            connection_fade_end=args.connection_fade_end,
+            connection_linewidth=args.connection_linewidth,
         )
         if not args.no_output:
             print(f"Successfully created visualization: {result_path}")

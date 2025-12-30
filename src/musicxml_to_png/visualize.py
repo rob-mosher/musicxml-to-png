@@ -88,6 +88,24 @@ class ConnectionConfig:
         faded = self.alpha * (1.0 - t)
         return max(self.min_alpha, min(1.0, faded))
 
+    def with_overrides(
+        self,
+        alpha: Optional[float] = None,
+        min_alpha: Optional[float] = None,
+        fade_start: Optional[float] = None,
+        fade_end: Optional[float] = None,
+        max_gap: Optional[float] = None,
+        linewidth: Optional[float] = None,
+    ) -> "ConnectionConfig":
+        return ConnectionConfig(
+            alpha=self.alpha if alpha is None else alpha,
+            min_alpha=self.min_alpha if min_alpha is None else min_alpha,
+            fade_start=self.fade_start if fade_start is None else fade_start,
+            fade_end=self.fade_end if fade_end is None else fade_end,
+            max_gap=self.max_gap if max_gap is None else max_gap,
+            linewidth=self.linewidth if linewidth is None else linewidth,
+        )
+
 
 @dataclass
 class VisualizationConfig:

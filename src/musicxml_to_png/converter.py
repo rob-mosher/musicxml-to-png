@@ -13,6 +13,7 @@ from musicxml_to_png.extract import (
 )
 from musicxml_to_png.models import DEFAULT_STACCATO_FACTOR, MIN_STACCATO_FACTOR, MAX_STACCATO_FACTOR, RehearsalMark
 from musicxml_to_png.visualize import (
+    ConnectionConfig,
     VisualizationConfig,
     VisualizationInputs,
     compute_plot_bounds,
@@ -130,6 +131,12 @@ def convert_musicxml_to_png(
     timeline_unit: str = "bar",
     transparent: bool = False,
     show_connections: bool = False,
+    connection_max_gap: Optional[float] = None,
+    connection_alpha: Optional[float] = None,
+    connection_min_alpha: Optional[float] = None,
+    connection_fade_start: Optional[float] = None,
+    connection_fade_end: Optional[float] = None,
+    connection_linewidth: Optional[float] = None,
 ) -> Path:
     """Convert a MusicXML file to a PNG visualization."""
     input_path = Path(input_path)
@@ -210,6 +217,15 @@ def convert_musicxml_to_png(
         transparent=transparent,
         show_connections=show_connections,
     )
+    connection_config = viz_config.connections.with_overrides(
+        alpha=connection_alpha,
+        min_alpha=connection_min_alpha,
+        fade_start=connection_fade_start,
+        fade_end=connection_fade_end,
+        max_gap=connection_max_gap,
+        linewidth=connection_linewidth,
+    )
+    viz_config = viz_config.with_overrides(connections=connection_config)
 
     connections = None
     if show_connections:
@@ -238,6 +254,7 @@ def convert_musicxml_to_png(
         tick_spec=tick_spec,
         config=viz_config,
         inputs=viz_inputs,
+        connection_config=connection_config,
     )
 
     return output_path
