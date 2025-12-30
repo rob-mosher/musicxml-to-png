@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Converter now builds `VisualizationConfig`, `VisualizationInputs`, and `TimeTickSpec` up front so visualization calls stay declarative and timeline ticks are fully data-driven.
 - Fixed bar-slice end-exclusivity regression by passing rebased measure ticks/connections/tick specs through converter to the visualizer.
 - Added explicit no-note guard in conversion to raise a clear `ValueError` before plotting.
+- Deduplicate connection detection for split segments so long held notes interrupted by shared-pitch overlaps don't emit duplicate connections.
+- Connection lines now start from the final split segment of a held note, preventing lines from originating at the first segment's start.
 
 ## [0.5.0] - 2025-12-29
 

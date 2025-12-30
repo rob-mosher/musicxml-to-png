@@ -514,16 +514,31 @@ def detect_note_connections(note_events: List[NoteEvent]) -> List[Tuple[int, int
     for instrument_notes in notes_by_instrument.values():
         # Sort by start_time, then by pitch for consistent ordering
         instrument_notes.sort(key=lambda item: (item[1].start_time, item[1].pitch_midi))
+
+        # Deduplicate split segments from the same underlying note (same pitch, same original end)
+        dedup_map: Dict[Tuple[float, float], Tuple[int, NoteEvent]] = {}
+        for idx, ev in instrument_notes:
+            original_end = ev.start_time + ev.original_duration
+            key = (ev.pitch_midi, round(original_end, 3))
+            # Keep the latest segment for this underlying note so connections start at the actual end
+            current = dedup_map.get(key)
+            if current is None or ev.start_time >= current[1].start_time:
+                dedup_map[key] = (idx, ev)
+
+        deduped_notes: List[Tuple[int, NoteEvent]] = sorted(
+            dedup_map.values(),
+            key=lambda item: (item[1].start_time, item[1].pitch_midi),
+        )
         
-        for i in range(len(instrument_notes) - 1):
-            idx1, note1 = instrument_notes[i]
+        for i in range(len(deduped_notes) - 1):
+            idx1, note1 = deduped_notes[i]
             
             # Check all subsequent notes to find the one that starts exactly where this one ends
             # (handles cases where multiple notes might start at the same time)
             note1_end = note1.start_time + note1.original_duration
             
-            for j in range(i + 1, len(instrument_notes)):
-                idx2, note2 = instrument_notes[j]
+            for j in range(i + 1, len(deduped_notes)):
+                idx2, note2 = deduped_notes[j]
                 note2_start = note2.start_time
                 
                 # If note2 starts after note1 ends, no need to check further (sorted by start_time)

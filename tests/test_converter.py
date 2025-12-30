@@ -1343,6 +1343,22 @@ class TestNoteConnections:
         assert len(connections) == 1
         assert (0, 1) in connections
 
+    def test_connection_detection_deduplicates_split_segments(self):
+        """Long note split by overlaps should not spawn duplicate connections."""
+        # Simulate a long note split into segments that share the same original end (4.0)
+        note_events = [
+            NoteEvent(pitch_midi=60.0, start_time=0.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, instrument_label="Violin", original_duration=4.0),
+            NoteEvent(pitch_midi=60.0, start_time=1.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, instrument_label="Violin", original_duration=3.0),
+            NoteEvent(pitch_midi=60.0, start_time=2.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, instrument_label="Violin", original_duration=2.0),
+            NoteEvent(pitch_midi=60.0, start_time=3.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, instrument_label="Violin", original_duration=1.0),
+            NoteEvent(pitch_midi=62.0, start_time=4.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, instrument_label="Violin", original_duration=1.0),
+        ]
+
+        connections = detect_note_connections(note_events)
+
+        # Connection should start from the last segment's visual end (index 3) to the next note
+        assert connections == [(3, 4)]
+
     def test_connection_visualization(self, tmp_path):
         """Test that connections are rendered when show_connections=True."""
         output_path = tmp_path / "output.png"
