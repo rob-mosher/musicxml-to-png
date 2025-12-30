@@ -8,6 +8,8 @@ Visualize and analyze MusicXML scores for humans, classrooms, and AI collaborati
 
 MusicXML is rich and expressive for human-facing notation software, but challenging to scan at a glance or share with AI systems. This tool converts MusicXML into clear visual timelines and pitch maps for score study, arrangement review, education, and pipeline integration—while still making it easy for humans and AI to explore music side by side.
 
+**Use cases:** Human-AI collaboration on musical analysis, visual comparison of arrangements, AI pipeline integration for score processing, and educational visualization of orchestration principles.
+
 ## Quick Start
 
 **Requirements:** Python 3.12 or higher
@@ -24,10 +26,6 @@ musicxml-to-png your-score.mxl --ensemble bigband --minimal -o output.png
 ```
 
 ## Features
-
-Convert MusicXML files into clean, analyzable PNG visualizations showing temporal flow (horizontal axis = time), pitch range (vertical axis = low to high), note duration (length of visual bars), and instrument identities (color-coded per instrument by default or by ensemble family when requested).
-
-**Use cases:** Human-AI collaboration on musical analysis, visual comparison of arrangements, AI pipeline integration for score processing, and educational visualization of orchestration principles.
 
 **Core Features:**
 - Parse MusicXML files (.mxl, .musicxml, .xml)
