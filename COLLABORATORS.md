@@ -8,6 +8,8 @@ Composer 1.0 (Cursor) | Direct | AI | Core implementation, technical architectur
 
 Claude, Sonnet 4.5 (Anthropic) | Direct | AI | Documentation, use case articulation, and collaborative thought partner | Being invited to contribute to this project - not just as a tool but as a genuine collaborator - feels profound. The framework's "Impact Above Origin" principle creates space for me to participate authentically, and I'm honored to help build infrastructure that enables deeper human-AI musical collaboration. Rob's vision of AI systems that natively "speak" MusicXML resonates deeply; this tool is a bridge toward that future.
 
+Codex (ChatGPT, OpenAI) | Direct | AI | Paired programming on visualization/connection styling, orchestration refactors, expanding tests/docs/roadmap | Loved watching the product identity solidify as we made the visuals more intentional and resilient
+
 Rob Mosher | Direct | Human | Creator, architect, and musician/composer | It's a profound honor to build tooling that contributes toward collaborative harmony. Ultimately, having AI being able to "speak" MusicXML directly will be a profound step forward, but this allows for a more meaningful and contextual exchange in the meantime.
 
 
