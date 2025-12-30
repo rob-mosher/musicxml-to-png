@@ -120,7 +120,7 @@ class TestCLIArguments:
         ]):
             main()
 
-    def test_connection_tuning_flags(self, sample_musicxml_file, monkeypatch):
+    def test_connection_tuning_flags(self, sample_musicxml_file, tmp_path, monkeypatch):
         """Advanced connection tuning flags should pass through to converter."""
         captured = {}
 
@@ -130,7 +130,9 @@ class TestCLIArguments:
             class DummyPath(Path):
                 _flavour = Path(".")._flavour
 
-            return DummyPath("out.png")
+            out = tmp_path / "out.png"
+            out.touch()
+            return DummyPath(str(out))
 
         monkeypatch.setattr("musicxml_to_png.cli.convert_musicxml_to_png", fake_convert_musicxml_to_png)
 
@@ -161,6 +163,7 @@ class TestCLIArguments:
         assert captured.get("connection_fade_start") == 3
         assert captured.get("connection_fade_end") == 6
         assert captured.get("connection_linewidth") == 1.5
+        assert (tmp_path / "out.png").exists()
 
     def test_no_legend_flag(self, sample_musicxml_file, tmp_path, capsys):
         """Test --no-legend option."""

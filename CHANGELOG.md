@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `ConnectionConfig` for visual tweaks (alpha fade, linewidth, optional max-gap) and a legend hint for connections.
 - Added coverage for connection alpha fading behavior.
 - Exposed connection styling controls via CLI flags (`--connection-*`) and library params (max-gap, alpha, fade, linewidth).
+- Added CLI and converter regression tests to ensure connection styling flags propagate end-to-end.
 
 ## [0.5.0] - 2025-12-29
 

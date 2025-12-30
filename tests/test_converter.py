@@ -1404,6 +1404,51 @@ class TestNoteConnections:
         
         assert output_path.exists()
 
+    def test_connection_config_passes_through_converter(self, tmp_path, monkeypatch):
+        """Connection styling overrides should reach visualization config."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Violin())
+        part.append(note.Note("C4"))
+        part.append(note.Note("D4"))
+        score.append(part)
+
+        captured = {}
+
+        def fake_create_visualization(*args, **kwargs):
+            captured["config"] = kwargs.get("config")
+            return tmp_path / "dummy.png"
+
+        monkeypatch.setattr("musicxml_to_png.converter.create_visualization", fake_create_visualization)
+
+        # Write a temporary MusicXML file so converter's file check passes
+        input_path = tmp_path / "in.mxl"
+        score.write("musicxml", input_path)
+
+        convert_musicxml_to_png(
+            input_path=input_path,
+            score=score,
+            output_path=tmp_path / "out.png",
+            show_connections=True,
+            connection_max_gap=1.5,
+            connection_alpha=0.4,
+            connection_min_alpha=0.2,
+            connection_fade_start=2.0,
+            connection_fade_end=4.0,
+            connection_linewidth=1.3,
+            write_output=False,
+        )
+
+        cfg = captured.get("config")
+        assert cfg is not None
+        conn_cfg = cfg.connections
+        assert conn_cfg.max_gap == 1.5
+        assert conn_cfg.alpha == 0.4
+        assert conn_cfg.min_alpha == 0.2
+        assert conn_cfg.fade_start == 2.0
+        assert conn_cfg.fade_end == 4.0
+        assert conn_cfg.linewidth == 1.3
+
 
 class TestConvertMusicxmlToPngErrors:
     """Test error handling in conversion function."""
