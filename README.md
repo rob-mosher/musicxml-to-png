@@ -3,7 +3,7 @@
 Visualize and analyze MusicXML scores for humans, classrooms, and AI collaborations/workflows
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/rob-mosher/musicxml-to-png/v0.4.0/docs/images/screenshot.png" alt="Example visualization showing MusicXML converted to PNG" width="100%" style="max-width: 1200px;">
+  <img src="https://raw.githubusercontent.com/rob-mosher/musicxml-to-png/v0.5.0/docs/images/screenshot.png" alt="Example visualization showing MusicXML converted to PNG" width="100%" style="max-width: 1200px;">
 </div>
 
 MusicXML is rich and expressive for human-facing notation software, but challenging to scan at a glance or share with AI systems. This tool converts MusicXML into clear visual timelines and pitch maps for score study, arrangement review, education, and pipeline integration—while still making it easy for humans and AI to explore music side by side.
@@ -201,7 +201,7 @@ output_path = convert_musicxml_to_png(
 
 ## Contributing
 
-See [Roadmap](https://raw.githubusercontent.com/rob-mosher/musicxml-to-png/v0.4.0/docs/roadmap.md) for planned features.
+See [Roadmap](https://raw.githubusercontent.com/rob-mosher/musicxml-to-png/v0.5.0/docs/roadmap.md) for planned features.
 
 This project emerged from human-AI collaborative exploration of musical structure. Contributions, ideas, and feedback are welcome!
 
@@ -209,7 +209,7 @@ This project emerged from human-AI collaborative exploration of musical structur
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](https://raw.githubusercontent.com/rob-mosher/musicxml-to-png/v0.4.0/LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://raw.githubusercontent.com/rob-mosher/musicxml-to-png/v0.5.0/LICENSE) file for details.
 
 ## Acknowledgments
 Built through collaborative iteration between human musical expertise and AI technical assistance. Created to bridge the gap between MusicXML (machine-readable but visually dense) and visual analysis (human-friendly and AI-parseable).

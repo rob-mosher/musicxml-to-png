@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2025-12-29
+
 ### Added
 
 - Default overlap splitting for stacked same-pitch notes so only the truly simultaneous segments use thicker bars.
@@ -140,6 +142,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Virtual environment setup and dependency management
 - MIT License
 
+[0.5.0]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.5.0
 [0.4.0]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.4.0
 [0.3.0]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.3.0
 [0.2.3]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.2.3
