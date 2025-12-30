@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Deduplicate connection detection for split segments so long held notes interrupted by shared-pitch overlaps don't emit duplicate connections.
 - Connection lines now start from the final split segment of a held note, preventing lines from originating at the first segment's start.
 - Connection detection now tolerates small floating-point timing differences when deduplicating split segments.
+- When multiple notes start together, only one connection is drawn into the next note start to avoid duplicate lines from simultaneous sources.
 
 ## [0.5.0] - 2025-12-29
 

@@ -1371,6 +1371,18 @@ class TestNoteConnections:
         connections = detect_note_connections(note_events)
         assert connections == [(2, 3)]
 
+    def test_connection_detection_only_one_from_simultaneous_sources(self):
+        """When multiple notes start together, only one connection should lead into the next start."""
+        note_events = [
+            NoteEvent(pitch_midi=60.0, start_time=0.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, instrument_label="Violin", original_duration=1.0),
+            NoteEvent(pitch_midi=62.0, start_time=0.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, instrument_label="Violin", original_duration=1.0),
+            NoteEvent(pitch_midi=64.0, start_time=1.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, instrument_label="Violin", original_duration=1.0),
+            NoteEvent(pitch_midi=67.0, start_time=1.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, instrument_label="Violin", original_duration=1.0),
+        ]
+
+        connections = detect_note_connections(note_events)
+        assert connections == [(0, 2)]
+
     def test_connection_visualization(self, tmp_path):
         """Test that connections are rendered when show_connections=True."""
         output_path = tmp_path / "output.png"

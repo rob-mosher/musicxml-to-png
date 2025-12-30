@@ -534,7 +534,9 @@ def detect_note_connections(note_events: List[NoteEvent]) -> List[Tuple[int, int
             dedup_map.values(),
             key=lambda item: (item[1].start_time, item[1].pitch_midi),
         )
-        
+
+        connected_target_starts: set[float] = set()
+
         for i in range(len(deduped_notes) - 1):
             idx1, note1 = deduped_notes[i]
             
@@ -559,6 +561,10 @@ def detect_note_connections(note_events: List[NoteEvent]) -> List[Tuple[int, int
                 # Check if notes are adjacent (no rest between)
                 # Use small epsilon for floating point comparison
                 if abs(note1_end - note2_start) < CONNECTION_TIME_EPS:
+                    target_key = round(note2_start / CONNECTION_TIME_EPS) * CONNECTION_TIME_EPS
+                    if target_key in connected_target_starts:
+                        break  # already connected to a note starting here; avoid duplicate lines
+                    connected_target_starts.add(target_key)
                     connections.append((idx1, idx2))
                     break  # Only connect to the first note that starts at this position
     
