@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Streamlined README with consistent Basic/Common/Advanced structure across Features, CLI, and Python Library sections for improved clarity and navigation.
 - Removed redundant Installation and MusicXML export sections, trusting users to infer setup from standard project files and their notation software documentation.
 - Refactored `visualize.py` into composable helpers with explicit sizing/tick/legend steps and introduced `VisualizationConfig`/`VisualizationContext` to make visualization orchestration clearer and reduce "magic" kwargs.
+- Converter now builds `VisualizationConfig`, `VisualizationInputs`, and `TimeTickSpec` up front so visualization calls stay declarative and timeline ticks are fully data-driven.
+- Fixed bar-slice end-exclusivity regression by passing rebased measure ticks/connections/tick specs through converter to the visualizer.
+- Added explicit no-note guard in conversion to raise a clear `ValueError` before plotting.
 
 ## [0.5.0] - 2025-12-29
 

@@ -12,7 +12,14 @@ from musicxml_to_png.extract import (
     detect_note_connections,
 )
 from musicxml_to_png.models import DEFAULT_STACCATO_FACTOR, MIN_STACCATO_FACTOR, MAX_STACCATO_FACTOR, RehearsalMark
-from musicxml_to_png.visualize import create_visualization
+from musicxml_to_png.visualize import (
+    VisualizationConfig,
+    VisualizationInputs,
+    compute_plot_bounds,
+    compute_padding,
+    generate_time_ticks,
+    create_visualization,
+)
 from musicxml_to_png.instruments import (
     ENSEMBLE_UNGROUPED,
     ENSEMBLE_ORCHESTRA,
@@ -171,6 +178,9 @@ def convert_musicxml_to_png(
         extract_rehearsal_marks(score, measure_offsets=measure_offsets) if show_rehearsal_marks else []
     )
 
+    if not note_events:
+        raise ValueError("No notes found in the MusicXML file")
+
     if slice_window is not None:
         clipped_marks = []
         for mark in rehearsal_marks:
@@ -186,31 +196,48 @@ def convert_musicxml_to_png(
     if title is None:
         title = input_path.stem
 
-    # Detect note connections if requested
-    connections = None
-    if show_connections:
-        connections = detect_note_connections(note_events)
-
-    create_visualization(
-        note_events,
-        output_path,
-        title if show_title else None,
-        score_duration,
+    viz_config = VisualizationConfig(
         timeline_unit=timeline_unit,
         show_grid=show_grid,
         minimal=minimal,
         ensemble=ensemble,
-        rehearsal_marks=rehearsal_marks,
-        measure_ticks=measure_ticks,
         show_legend=show_legend,
         show_title=show_title,
         write_output=write_output,
-        dpi=dpi,
         time_stretch=time_stretch,
         fig_width=fig_width,
+        dpi=dpi,
         transparent=transparent,
         show_connections=show_connections,
+    )
+
+    connections = None
+    if show_connections:
+        connections = detect_note_connections(note_events)
+
+    bounds = compute_plot_bounds(note_events, score_duration)
+    _, time_padding, _ = compute_padding(bounds, minimal, rehearsal_marks)
+    tick_spec = generate_time_ticks(bounds, timeline_unit, measure_ticks, time_padding)
+
+    viz_inputs = VisualizationInputs(
+        note_events=note_events,
+        rehearsal_marks=rehearsal_marks,
+        measure_ticks=measure_ticks,
         connections=connections,
+        tick_spec=tick_spec,
+    )
+
+    create_visualization(
+        note_events,
+        output_path,
+        title,
+        score_duration,
+        rehearsal_marks=rehearsal_marks,
+        measure_ticks=measure_ticks,
+        connections=connections,
+        tick_spec=tick_spec,
+        config=viz_config,
+        inputs=viz_inputs,
     )
 
     return output_path

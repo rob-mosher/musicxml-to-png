@@ -128,6 +128,15 @@ class VisualizationContext:
     config: VisualizationConfig
 
 
+@dataclass
+class VisualizationInputs:
+    note_events: List[NoteEvent]
+    rehearsal_marks: Optional[List[RehearsalMark]] = None
+    measure_ticks: Optional[List[tuple[int, float]]] = None
+    connections: Optional[List[Tuple[int, int]]] = None
+    tick_spec: Optional["TimeTickSpec"] = None
+
+
 @dataclass(frozen=True)
 class TimeTickSpec:
     major: List[float]
@@ -140,7 +149,7 @@ def _validate_note_events(note_events: List[NoteEvent]) -> None:
         raise ValueError("No notes found in the MusicXML file")
 
 
-def _compute_plot_bounds(note_events: List[NoteEvent], score_duration: Optional[float]) -> PlotBounds:
+def compute_plot_bounds(note_events: List[NoteEvent], score_duration: Optional[float]) -> PlotBounds:
     min_duration = min(event.duration for event in note_events)
     min_pitch = min(event.pitch_midi for event in note_events)
     max_pitch = max(event.pitch_midi for event in note_events)
@@ -161,7 +170,7 @@ def _compute_plot_bounds(note_events: List[NoteEvent], score_duration: Optional[
     )
 
 
-def _compute_figure_dimensions(
+def compute_figure_dimensions(
     bounds: PlotBounds,
     time_stretch: float,
     fig_width: Optional[float],
@@ -309,7 +318,7 @@ def _apply_axis_labels(ax, timeline_unit: str, minimal: bool) -> None:
     ax.set_ylabel("Pitch (MIDI note number)", fontsize=12)
 
 
-def _compute_padding(
+def compute_padding(
     bounds: PlotBounds,
     minimal: bool,
     rehearsal_marks: Optional[List[RehearsalMark]],
@@ -331,7 +340,7 @@ def _set_axis_limits(
     ax.set_xlim(bounds.min_time - time_padding, bounds.max_time + time_padding)
 
 
-def _generate_time_ticks(
+def generate_time_ticks(
     bounds: PlotBounds,
     timeline_unit: str,
     measure_ticks: Optional[List[tuple[int, float]]],
@@ -508,11 +517,24 @@ def create_visualization(
     transparent: Optional[bool] = None,
     show_connections: Optional[bool] = None,
     connections: Optional[List[Tuple[int, int]]] = None,
+    tick_spec: Optional[TimeTickSpec] = None,
     config: Optional[VisualizationConfig] = None,
+    inputs: Optional[VisualizationInputs] = None,
 ) -> None:
     """
     Create a 2D visualization of note events and save as PNG.
     """
+    if inputs is not None:
+        note_events = inputs.note_events
+        if rehearsal_marks is None and inputs.rehearsal_marks is not None:
+            rehearsal_marks = inputs.rehearsal_marks
+        if measure_ticks is None and inputs.measure_ticks is not None:
+            measure_ticks = inputs.measure_ticks
+        if connections is None and inputs.connections is not None:
+            connections = inputs.connections
+        if tick_spec is None and inputs.tick_spec is not None:
+            tick_spec = inputs.tick_spec
+
     _validate_note_events(note_events)
 
     resolved_config = (config or VisualizationConfig()).with_overrides(
@@ -530,11 +552,11 @@ def create_visualization(
         show_connections=show_connections,
     )
 
-    bounds = _compute_plot_bounds(note_events, score_duration)
-    fig_width, fig_height = _compute_figure_dimensions(bounds, resolved_config.time_stretch, resolved_config.fig_width)
+    bounds = compute_plot_bounds(note_events, score_duration)
+    fig_width, fig_height = compute_figure_dimensions(bounds, resolved_config.time_stretch, resolved_config.fig_width)
     fig, ax, clamped_dpi = _create_figure(fig_width, fig_height, resolved_config.dpi, resolved_config.transparent)
 
-    pitch_padding, time_padding, extra_top_padding = _compute_padding(
+    pitch_padding, time_padding, extra_top_padding = compute_padding(
         bounds, resolved_config.minimal, rehearsal_marks
     )
     ctx = VisualizationContext(
@@ -572,7 +594,7 @@ def create_visualization(
         ctx.ax.set_title(title, fontsize=14, fontweight="bold")
 
     _set_axis_limits(ctx.ax, bounds, pitch_padding, time_padding, extra_top_padding)
-    tick_spec = _generate_time_ticks(bounds, resolved_config.timeline_unit, measure_ticks, time_padding)
+    tick_spec = tick_spec or generate_time_ticks(bounds, resolved_config.timeline_unit, measure_ticks, time_padding)
     _apply_time_ticks(ctx.ax, tick_spec, resolved_config.minimal)
     _apply_pitch_ticks(ctx.ax, bounds, pitch_padding, resolved_config.minimal)
 
