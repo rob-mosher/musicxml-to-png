@@ -277,13 +277,13 @@ Examples:
         "--connection-linewidth",
         type=float,
         default=None,
-        help="Line width for connection lines (default 1.0, advanced).",
+        help="Line width for connection lines (default 2.5, advanced).",
     )
     parser.add_argument(
         "--connection-curve-height-factor",
         type=float,
         default=None,
-        help="Curve height factor for connection lines; 0 = straight, higher bends upward (advanced).",
+        help="Curve height factor for connection lines; 0 = straight, higher bends upward (default 2.0, advanced).",
     )
     
     args = parser.parse_args()

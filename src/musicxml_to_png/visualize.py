@@ -78,8 +78,8 @@ class ConnectionConfig:
     fade_start: float = 4.0  # beats where fading begins
     fade_end: float = 8.0  # beats where alpha reaches min_alpha
     max_gap: Optional[float] = None  # skip drawing if connection gap exceeds this (in beats)
-    linewidth: float = 1.0
-    curve_height_factor: float = 0.0  # 0 = straight line; positive values bend upward
+    linewidth: float = 2.5
+    curve_height_factor: float = 2.0  # 0 = straight line; positive values bend upward
 
     def alpha_for_length(self, length: float) -> float:
         if self.fade_end <= self.fade_start:

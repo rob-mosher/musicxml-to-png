@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Changed
+
+- Updated connection defaults: linewidth now 2.5 and curve height factor 2.0 (connections curve upward by default).
+
 ## [0.6.0] - 2025-12-30
 
 ### Added
