@@ -50,10 +50,11 @@ Convert MusicXML files into clean, analyzable PNG visualizations showing tempora
     - Slice ranges are 1-based and end-exclusive (e.g., `2-4` yields bars 2–3; `2-3` beats yields only beat 2)
   - Timeline units for x-axis: bars/measures (default) or beats (`--timeline-unit measure` or `--timeline-unit beat`), labels are 1-indexed
   - Output DPI control: `--dpi` (default 150)
+  - Transparent background: `--transparent` for PNG output with transparent backgrounds (useful for overlays)
   - No-output mode for smoke tests: `--no-output`
   - Verbose mode for debugging (`-v`/`--verbose`)
   - Same-pitch stacking is split by default so only overlapping segments thicken; opt out with `--no-overlap-splitting` for the legacy whole-note look
-- Export as high-resolution PNG with user-settable DPI, defaulting to 150 (`--dpi 72`)
+- Export as high-resolution PNG with user-settable DPI, defaulting to 150 (`--dpi 72`), with optional transparent backgrounds (`--transparent`)
 
 ## Getting Your Music into MusicXML
 
@@ -146,6 +147,9 @@ musicxml-to-png input.xml --no-grid
 # Minimal mode (no labels, legend, title, or borders)
 musicxml-to-png input.xml --minimal
 
+# Transparent background (useful for overlays)
+musicxml-to-png input.xml --transparent
+
 # Show music21 warnings and diagnostics
 musicxml-to-png input.xml --verbose
 # or
@@ -195,7 +199,8 @@ output_path = convert_musicxml_to_png(
     title="My Composition",
     show_grid=False,           # Disable grid lines
     minimal=True,              # Remove all labels/borders
-    ensemble="bigband"         # Use bigband categorization
+    ensemble="bigband",        # Use bigband categorization
+    transparent=True           # Use transparent background
 )
 ```
 

@@ -120,6 +120,7 @@ def convert_musicxml_to_png(
     slice_start: Optional[float] = None,
     slice_end: Optional[float] = None,
     timeline_unit: str = "bar",
+    transparent: bool = False,
 ) -> Path:
     """Convert a MusicXML file to a PNG visualization."""
     input_path = Path(input_path)
@@ -200,6 +201,7 @@ def convert_musicxml_to_png(
         dpi=dpi,
         time_stretch=time_stretch,
         fig_width=fig_width,
+        transparent=transparent,
     )
 
     return output_path

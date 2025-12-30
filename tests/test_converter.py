@@ -852,6 +852,93 @@ class TestCreateVisualization:
         create_visualization(note_events, output_path_bb, ensemble=ENSEMBLE_BIGBAND)
         assert output_path_bb.exists()
 
+    def test_transparent_background(self, tmp_path, monkeypatch):
+        """Test that transparent=True sets figure and axes backgrounds to transparent."""
+        output_path = tmp_path / "output.png"
+        
+        note_events = [
+            NoteEvent(pitch_midi=60.0, start_time=0.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS),
+        ]
+        
+        captured_fig = {}
+        captured_ax = {}
+        captured_savefig_kwargs = {}
+        real_subplots = plt.subplots
+        
+        def fake_subplots(*args, **kwargs):
+            fig, ax = real_subplots(*args, **kwargs)
+            captured_fig["fig"] = fig
+            captured_ax["ax"] = ax
+            # Patch savefig on this specific figure instance
+            original_savefig = fig.savefig
+            def patched_savefig(path, **save_kwargs):
+                captured_savefig_kwargs.update(save_kwargs)
+                return original_savefig(path, **save_kwargs)
+            fig.savefig = patched_savefig
+            return fig, ax
+        
+        monkeypatch.setattr(plt, "subplots", fake_subplots)
+        
+        create_visualization(
+            note_events,
+            output_path,
+            ensemble=ENSEMBLE_ORCHESTRA,
+            transparent=True,
+        )
+        
+        # Verify file was created
+        assert output_path.exists()
+        
+        # Verify figure and axes have transparent backgrounds
+        fig = captured_fig["fig"]
+        ax = captured_ax["ax"]
+        fig_facecolor = fig.patch.get_facecolor()
+        ax_facecolor = ax.get_facecolor()
+        # Matplotlib may return 'none', (1,1,1,0), or (0,0,0,0) for transparent
+        assert (fig_facecolor == 'none' or 
+                (isinstance(fig_facecolor, tuple) and len(fig_facecolor) == 4 and fig_facecolor[3] == 0))
+        assert (ax_facecolor == 'none' or 
+                (isinstance(ax_facecolor, tuple) and len(ax_facecolor) == 4 and ax_facecolor[3] == 0))
+        
+        # Verify savefig was called with transparent=True
+        assert captured_savefig_kwargs.get("transparent") is True
+
+    def test_non_transparent_background_default(self, tmp_path, monkeypatch):
+        """Test that transparent=False (default) uses opaque backgrounds."""
+        output_path = tmp_path / "output.png"
+        
+        note_events = [
+            NoteEvent(pitch_midi=60.0, start_time=0.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS),
+        ]
+        
+        captured_savefig_kwargs = {}
+        real_subplots = plt.subplots
+        
+        def fake_subplots(*args, **kwargs):
+            fig, ax = real_subplots(*args, **kwargs)
+            # Patch savefig on this specific figure instance
+            original_savefig = fig.savefig
+            def patched_savefig(path, **save_kwargs):
+                captured_savefig_kwargs.update(save_kwargs)
+                return original_savefig(path, **save_kwargs)
+            fig.savefig = patched_savefig
+            return fig, ax
+        
+        monkeypatch.setattr(plt, "subplots", fake_subplots)
+        
+        create_visualization(
+            note_events,
+            output_path,
+            ensemble=ENSEMBLE_ORCHESTRA,
+            transparent=False,  # Explicitly set to False
+        )
+        
+        # Verify file was created
+        assert output_path.exists()
+        
+        # Verify savefig was called with transparent=False (or not set, which defaults to False)
+        assert captured_savefig_kwargs.get("transparent") is not True
+
 
 class TestConvertMusicxmlToPng:
     """Test full conversion function."""
@@ -1163,6 +1250,24 @@ class TestConvertMusicxmlToPng:
         
         output_path = convert_musicxml_to_png(input_path, title="My Custom Title")
         assert output_path.exists()
+
+    def test_transparent_background_conversion(self, tmp_path):
+        """Test conversion with transparent background."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Violin())
+        n = note.Note("C4")
+        n.quarterLength = 1.0
+        part.append(n)
+        score.append(part)
+        
+        input_path = tmp_path / "test.mxl"
+        score.write("musicxml", input_path)
+        
+        output_path = convert_musicxml_to_png(input_path, transparent=True)
+        
+        assert output_path.exists()
+        assert output_path.suffix == ".png"
 
     def test_file_not_found_error(self):
         """Test that missing file raises FileNotFoundError."""

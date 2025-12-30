@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- CLI flag `--transparent` (and library argument `transparent`) to generate PNG output with transparent backgrounds instead of white, enabling overlays on any background color.
+
 ## [0.5.0] - 2025-12-29
 
 ### Added

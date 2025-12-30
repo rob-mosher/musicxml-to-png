@@ -231,6 +231,12 @@ Examples:
         default="bar",
         help="Display the timeline using bars/measures (default) or beats on the x-axis.",
     )
+
+    parser.add_argument(
+        "--transparent",
+        action="store_true",
+        help="Use a transparent background for the output PNG instead of white.",
+    )
     
     args = parser.parse_args()
     
@@ -323,6 +329,7 @@ Examples:
             slice_start=slice_start,
             slice_end=slice_end,
             timeline_unit=args.timeline_unit,
+            transparent=args.transparent,
         )
         if not args.no_output:
             print(f"Successfully created visualization: {result_path}")

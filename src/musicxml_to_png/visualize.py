@@ -48,6 +48,7 @@ def create_visualization(
     time_stretch: float = 1.0,
     fig_width: Optional[float] = None,
     dpi: int = 150,
+    transparent: bool = False,
 ) -> None:
     """
     Create a 2D visualization of note events and save as PNG.
@@ -95,6 +96,10 @@ def create_visualization(
 
     clamped_dpi = max(50, min(600, int(dpi)))
     fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=clamped_dpi)
+    
+    if transparent:
+        fig.patch.set_facecolor('none')
+        ax.set_facecolor('none')
 
     family_mode = ensemble in (ENSEMBLE_BIGBAND, ENSEMBLE_ORCHESTRA)
 
@@ -284,5 +289,5 @@ def create_visualization(
 
     plt.tight_layout()
     if write_output:
-        fig.savefig(output_path, dpi=clamped_dpi, bbox_inches="tight")
+        fig.savefig(output_path, dpi=clamped_dpi, bbox_inches="tight", transparent=transparent)
     plt.close(fig)

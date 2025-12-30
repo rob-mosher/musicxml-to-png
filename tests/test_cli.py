@@ -325,3 +325,15 @@ class TestCLIErrorHandling:
         
         output_file = sample_musicxml_file.with_suffix(".png")
         assert output_file.exists()
+
+    def test_transparent_flag(self, sample_musicxml_file, tmp_path, capsys):
+        """Test --transparent option."""
+        with patch("sys.argv", [
+            "musicxml-to-png",
+            str(sample_musicxml_file),
+            "--transparent",
+        ]):
+            main()
+        
+        output_file = sample_musicxml_file.with_suffix(".png")
+        assert output_file.exists()
