@@ -18,6 +18,10 @@ from musicxml_to_png.models import (
     MAX_STACCATO_FACTOR,
 )
 
+# Small tolerance for matching adjacent note timings to avoid float drift in connections
+# EPS means epsilon (small difference)
+CONNECTION_TIME_EPS = 0.001
+
 
 def _build_measure_offset_map(score: stream.Score) -> tuple[Dict[str, float], float]:
     """
@@ -519,7 +523,8 @@ def detect_note_connections(note_events: List[NoteEvent]) -> List[Tuple[int, int
         dedup_map: Dict[Tuple[float, float], Tuple[int, NoteEvent]] = {}
         for idx, ev in instrument_notes:
             original_end = ev.start_time + ev.original_duration
-            key = (ev.pitch_midi, round(original_end, 3))
+            quantized_end = round(original_end / CONNECTION_TIME_EPS) * CONNECTION_TIME_EPS
+            key = (ev.pitch_midi, quantized_end)
             # Keep the latest segment for this underlying note so connections start at the actual end
             current = dedup_map.get(key)
             if current is None or ev.start_time >= current[1].start_time:
@@ -542,7 +547,7 @@ def detect_note_connections(note_events: List[NoteEvent]) -> List[Tuple[int, int
                 note2_start = note2.start_time
                 
                 # If note2 starts after note1 ends, no need to check further (sorted by start_time)
-                if note2_start > note1_end + 0.001:
+                if note2_start > note1_end + CONNECTION_TIME_EPS:
                     break
                 
                 # Only connect notes on different pitches
@@ -553,7 +558,7 @@ def detect_note_connections(note_events: List[NoteEvent]) -> List[Tuple[int, int
                 
                 # Check if notes are adjacent (no rest between)
                 # Use small epsilon for floating point comparison
-                if abs(note1_end - note2_start) < 0.001:
+                if abs(note1_end - note2_start) < CONNECTION_TIME_EPS:
                     connections.append((idx1, idx2))
                     break  # Only connect to the first note that starts at this position
     

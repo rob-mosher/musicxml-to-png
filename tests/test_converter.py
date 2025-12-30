@@ -1359,6 +1359,18 @@ class TestNoteConnections:
         # Connection should start from the last segment's visual end (index 3) to the next note
         assert connections == [(3, 4)]
 
+    def test_connection_detection_handles_near_equal_original_ends(self):
+        """Tiny float differences in original ends should still deduplicate to a single connection."""
+        note_events = [
+            NoteEvent(pitch_midi=60.0, start_time=0.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, instrument_label="Violin", original_duration=3.0004),
+            NoteEvent(pitch_midi=60.0, start_time=1.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, instrument_label="Violin", original_duration=2.0004),
+            NoteEvent(pitch_midi=60.0, start_time=2.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, instrument_label="Violin", original_duration=1.0002),
+            NoteEvent(pitch_midi=62.0, start_time=3.0009, duration=1.0, instrument_family=ORCHESTRA_STRINGS, instrument_label="Violin", original_duration=1.0),
+        ]
+
+        connections = detect_note_connections(note_events)
+        assert connections == [(2, 3)]
+
     def test_connection_visualization(self, tmp_path):
         """Test that connections are rendered when show_connections=True."""
         output_path = tmp_path / "output.png"

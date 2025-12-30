@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added explicit no-note guard in conversion to raise a clear `ValueError` before plotting.
 - Deduplicate connection detection for split segments so long held notes interrupted by shared-pitch overlaps don't emit duplicate connections.
 - Connection lines now start from the final split segment of a held note, preventing lines from originating at the first segment's start.
+- Connection detection now tolerates small floating-point timing differences when deduplicating split segments.
 
 ## [0.5.0] - 2025-12-29
 
