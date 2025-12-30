@@ -23,102 +23,40 @@ musicxml-to-png your-score.mxl
 musicxml-to-png your-score.mxl --ensemble bigband --minimal -o output.png
 ```
 
-See [Installation](#installation) for development setup.
-
 ## Features
 
 Convert MusicXML files into clean, analyzable PNG visualizations showing temporal flow (horizontal axis = time), pitch range (vertical axis = low to high), note duration (length of visual bars), and instrument identities (color-coded per instrument by default or by ensemble family when requested).
 
 **Use cases:** Human-AI collaboration on musical analysis, visual comparison of arrangements, AI pipeline integration for score processing, and educational visualization of orchestration principles.
 
-- Parse MusicXML files (.xml, .musicxml, .mxl)
+**Core Features:**
+- Parse MusicXML files (.mxl, .musicxml, .xml)
 - Extract note events (pitch, duration, start time, instrument)
-- High-resolution 2D visualization (time × pitch) with grid/labels toggles
+- High-resolution 2D visualization (time × pitch) with grid/labels
 - Multiple ensemble types:
   - Ungrouped (default): every part gets its own color, even if multiple of the same instrument appear
   - Orchestra: strings, winds, brass, percussion
   - Bigband: trumpets, trombones, saxophones, rhythm section
   - (More ensemble types coming - jazzcombo, chamber, etc.)
 - Color-coded instruments or families (per-instrument by default, ensemble palettes when requested)
-- Customizable visualization:
-  - Grid lines (enabled by default, disable with `--no-grid`)
-  - Minimal mode (remove all labels, legend, title, borders, `--minimal`)
-  - Custom titles (`-t "Custom Title"`)
-  - Width controls: `--time-stretch` or `--fig-width`
-  - Staccato shortening (default 40%); override with `--staccato-factor` (0.1–0.9)
-  - Timeline slicing by bars/measures or beats using `--slice-range start-end` (unit from `--timeline-unit`, default bar/measure)
-    - Slice ranges are 1-based and end-exclusive (e.g., `2-4` yields bars 2–3; `2-3` beats yields only beat 2)
-  - Timeline units for x-axis: bars/measures (default) or beats (`--timeline-unit measure` or `--timeline-unit beat`), labels are 1-indexed
-  - Output DPI control: `--dpi` (default 150)
-  - Transparent background: `--transparent` for PNG output with transparent backgrounds (useful for overlays)
-  - No-output mode for smoke tests: `--no-output`
-  - Verbose mode for debugging (`-v`/`--verbose`)
-  - Same-pitch stacking is split by default so only overlapping segments thicken; opt out with `--no-overlap-splitting` for the legacy whole-note look
-- Export as high-resolution PNG with user-settable DPI, defaulting to 150 (`--dpi 72`), with optional transparent backgrounds (`--transparent`)
+- Export as high-resolution PNG (default 150 DPI)
 
-## Getting Your Music into MusicXML
+**Common Customization:**
+- Grid lines (enabled by default, disable with `--no-grid`)
+- Minimal mode (remove all labels, legend, title, borders, `--minimal`)
+- Custom titles (`-t "Custom Title"`)
+- Output DPI control: `--dpi` (default 150)
+- Transparent background: `--transparent` for PNG output with transparent backgrounds (useful for overlays)
+- Timeline units for x-axis: bars/measures (default) or beats (`--timeline-unit measure` or `--timeline-unit beat`), labels are 1-indexed
 
-Most modern notation software can export to MusicXML format. Here are some popular options:
-
-**Desktop Software:**
-- **[Dorico](https://www.steinberg.net/dorico/)** - File → Export → MusicXML (or use compressed .mxl format)
-- **[Finale](https://www.finalemusic.com/)** - File → Export → MusicXML
-- **[LilyPond](https://lilypond.org/)** - Can export via `lilypond --formats=xml`
-- **[MuseScore](https://musescore.org/)** (Free, open source) - File → Export → MusicXML
-- **[Notion](https://www.presonus.com/products/Notion)** - File → Export → MusicXML
-- **[Overture](https://sonicscores.com/overture/)** - File → Export → MusicXML
-- **[Sibelius](https://www.avid.com/sibelius)** - File → Export → MusicXML
-
-**Web-Based:**
-- **[Flat.io](https://flat.io/)** - File → Export → MusicXML
-- **[Noteflight](https://www.noteflight.com/)** - File → Export → MusicXML
-
-For detailed export instructions, please refer to your notation software's documentation. Most software supports both uncompressed `.mxl` and compressed `.xml` formats - this tool handles both!
-
-## Installation
-
-### For End Users
-
-Simply install from PyPI:
-
-```bash
-pip install musicxml-to-png
-```
-
-**Note:** Requires Python 3.12 or higher. If you don't have Python 3.12, `pip` will show an error with installation instructions.
-
-### For Developers
-
-If you want to contribute or develop locally:
-
-1. **Python Version:** This project requires Python 3.12. The `.python-version` file will automatically set this if you use `pyenv`, `asdf`, or similar version managers.
-
-   Using pyenv:
-   ```bash
-   pyenv install 3.12  # If not already installed
-   python --version    # Verify it shows Python 3.12.x
-   ```
-
-2. **Clone the repository:**
-   ```bash
-   git clone <repository-url>
-   cd musicxml-to-png
-   ```
-
-3. **Set up Python environment:**
-   ```bash
-   # Create and activate virtual environment
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-   # Install dependencies
-   pip install -r requirements.txt
-
-   # Install package in development mode
-   pip install -e .
-   ```
-
-**Note:** Activate the virtual environment (`source venv/bin/activate`) each time you work on the project. You'll see `(venv)` in your prompt when active.
+**Advanced Options:**
+- Width controls: `--time-stretch` or `--fig-width` to adjust timeline width
+- Staccato shortening (default 40%); override with `--staccato-factor` (0.1–0.9)
+- Timeline slicing by bars/measures or beats using `--slice-range start-end` (unit from `--timeline-unit`, default bar/measure)
+  - Slice ranges are 1-based and end-exclusive (e.g., `2-4` yields bars 2–3; `2-3` beats yields only beat 2)
+- Same-pitch stacking is split by default so only overlapping segments thicken; opt out with `--no-overlap-splitting` for the legacy whole-note look
+- No-output mode for smoke tests: `--no-output`
+- Verbose mode for debugging (`-v`/`--verbose`)
 
 ## Usage
 
@@ -127,7 +65,7 @@ If you want to contribute or develop locally:
 Convert a MusicXML file to PNG:
 
 ```bash
-musicxml-to-png input.xml
+musicxml-to-png input.mxl
 ```
 
 This creates `input.png` in the same directory. Supports both `.xml` and `.mxl` (compressed) MusicXML files.
@@ -136,45 +74,59 @@ This creates `input.png` in the same directory. Supports both `.xml` and `.mxl` 
 
 ```bash
 # Specify custom output file
-musicxml-to-png input.xml -o output.png
+musicxml-to-png input.mxl -o output.png
 
 # Add custom title
-musicxml-to-png input.xml --title "My Composition"
+musicxml-to-png input.mxl --title "My Composition"
+
+# Ensemble types - select instrument categorization scheme
+musicxml-to-png input.mxl                              # Ungrouped (default) - every instrument gets its own color
+musicxml-to-png input.mxl --ensemble orchestra        # Group by orchestra families
+musicxml-to-png input.mxl --ensemble bigband          # Group by bigband families
 
 # Disable grid lines
-musicxml-to-png input.xml --no-grid
+musicxml-to-png input.mxl --no-grid
 
 # Minimal mode (no labels, legend, title, or borders)
-musicxml-to-png input.xml --minimal
+musicxml-to-png input.mxl --minimal
 
 # Transparent background (useful for overlays)
-musicxml-to-png input.xml --transparent
+musicxml-to-png input.mxl --transparent
+```
 
-# Show music21 warnings and diagnostics
-musicxml-to-png input.xml --verbose
+**Common Options:**
+
+```bash
+# Control visibility of specific elements
+musicxml-to-png input.mxl --no-rehearsal-marks  # Hide rehearsal marks
+musicxml-to-png input.mxl --no-legend          # Hide legend
+musicxml-to-png input.mxl --no-title           # Hide title
+
+# Output quality
+musicxml-to-png input.mxl --dpi 300            # Higher resolution (default 150)
+
+# Timeline display
+musicxml-to-png input.mxl --timeline-unit beat  # Show beats instead of bars
+```
+
+**Advanced Options:**
+
+```bash
+# Width controls
+musicxml-to-png input.mxl --time-stretch 1.2   # Widen timeline by 20%
+musicxml-to-png input.mxl --fig-width 24.0    # Explicit width in inches
+
+# Musical adjustments
+musicxml-to-png input.mxl --staccato-factor 0.4  # Shorten staccato notes (default 0.4)
+musicxml-to-png input.mxl --no-overlap-splitting # Legacy whole-note stacking
+
+# Timeline slicing (bars 5-10, 1-indexed, end-exclusive)
+musicxml-to-png input.mxl --slice-range 5-10 --timeline-unit bar
+
+# Debugging
+musicxml-to-png input.mxl --verbose            # Show music21 warnings and diagnostics
 # or
-musicxml-to-png input.xml -v
-```
-
-**Ensemble Types:**
-
-Select the instrument categorization scheme:
-
-```bash
-# Ungrouped (default) - every instrument gets its own color
-musicxml-to-png input.xml
-
-# Group by orchestra families
-musicxml-to-png input.xml --ensemble orchestra
-
-# Group by bigband families
-musicxml-to-png input.xml --ensemble bigband
-```
-
-**Combining Options:**
-
-```bash
-musicxml-to-png input.xml --ensemble bigband --minimal --no-grid -o output.png
+musicxml-to-png input.mxl -v
 ```
 
 ### Python Library
@@ -187,20 +139,40 @@ from pathlib import Path
 
 # Basic conversion
 output_path = convert_musicxml_to_png(
-    input_path=Path("input.xml"),
+    input_path=Path("input.mxl"),
     output_path=Path("output.png"),  # Optional
     title="My Composition"  # Optional
 )
 
-# With all options
+# With common options
 output_path = convert_musicxml_to_png(
-    input_path=Path("input.xml"),
+    input_path=Path("input.mxl"),
     output_path=Path("output.png"),
     title="My Composition",
-    show_grid=False,           # Disable grid lines
-    minimal=True,              # Remove all labels/borders
-    ensemble="bigband",        # Use bigband categorization
-    transparent=True           # Use transparent background
+    show_grid=False,             # Disable grid lines
+    minimal=True,                # Remove all labels/borders
+    ensemble="bigband",          # Use bigband categorization
+    transparent=True,            # Use transparent background
+    show_rehearsal_marks=False,  # Hide rehearsal marks
+    show_legend=False,           # Hide legend
+    show_title=False,            # Hide title
+    dpi=300,                     # Higher resolution
+    timeline_unit="beat"         # Show beats instead of bars
+)
+
+# Advanced options
+output_path = convert_musicxml_to_png(
+    input_path=Path("input.mxl"),
+    output_path=Path("output.png"),
+    ensemble="orchestra",
+    time_stretch=1.2,            # Widen timeline by 20%
+    fig_width=24.0,              # Explicit figure width in inches
+    staccato_factor=0.4,         # Shorten staccato notes to 40%
+    split_overlaps=False,        # Legacy whole-note stacking
+    slice_mode="bar",            # Slice by bars
+    slice_start=5,               # Start at bar 5 (1-indexed)
+    slice_end=10,                # End before bar 10
+    write_output=True            # Set False for smoke tests
 )
 ```
 
@@ -210,7 +182,7 @@ See [Roadmap](https://raw.githubusercontent.com/rob-mosher/musicxml-to-png/v0.5.
 
 This project emerged from human-AI collaborative exploration of musical structure. Contributions, ideas, and feedback are welcome!
 
-**Philosophy:** This tool exists to enable human-AI collaboration, not to replace human musical intuition. The goal is to create shared visual language that helps both humans and AI systems understand musical architecture more deeply.
+**Philosophy:** This tool exists to enable human-AI collaboration, not to replace human musical intuition. The goal is to create shared visual language that helps both humans and AI systems understand musical architecture more deeply, together.
 
 ## License
 

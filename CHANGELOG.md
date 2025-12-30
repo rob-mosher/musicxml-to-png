@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - CLI flag `--transparent` (and library argument `transparent`) to generate PNG output with transparent backgrounds instead of white, enabling overlays on any background color.
 
+### Changed
+
+- Streamlined README with consistent Basic/Common/Advanced structure across Features, CLI, and Python Library sections for improved clarity and navigation.
+- Removed redundant Installation and MusicXML export sections, trusting users to infer setup from standard project files and their notation software documentation.
+
 ## [0.5.0] - 2025-12-29
 
 ### Added
