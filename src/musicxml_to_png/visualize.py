@@ -1,7 +1,7 @@
 """Visualization helpers for MusicXML note events."""
 
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -49,6 +49,8 @@ def create_visualization(
     fig_width: Optional[float] = None,
     dpi: int = 150,
     transparent: bool = False,
+    show_connections: bool = False,
+    connections: Optional[List[Tuple[int, int]]] = None,
 ) -> None:
     """
     Create a 2D visualization of note events and save as PNG.
@@ -141,6 +143,47 @@ def create_visualization(
             edgecolor="black",
             linewidth=0.3,
         )
+
+    # Draw connections between adjacent notes
+    if show_connections and connections:
+        # Build color map for connections (same as note colors)
+        connection_color_map = {}
+        for idx, event in enumerate(note_events):
+            if not family_mode:
+                connection_color_map[idx] = color_map[event.instrument_label]
+            else:
+                connection_color_map[idx] = get_family_color(event.instrument_family, ensemble=ensemble)
+        
+        for note1_idx, note2_idx in connections:
+            if note1_idx >= len(note_events) or note2_idx >= len(note_events):
+                continue
+            
+            note1 = note_events[note1_idx]
+            note2 = note_events[note2_idx]
+            
+            # Calculate connection points
+            # Start: visual end of note1 (right edge of the visible bar, center vertically)
+            # Use duration (not original_duration) for visual connection point
+            x1 = note1.start_time + note1.duration
+            y1 = note1.pitch_midi
+            
+            # End: start of note2 (left edge, center vertically)
+            x2 = note2.start_time
+            y2 = note2.pitch_midi
+            
+            # Get connection color (use note1's color)
+            connection_color = connection_color_map.get(note1_idx, "gray")
+            
+            # Draw straight line connection
+            ax.plot(
+                [x1, x2],
+                [y1, y2],
+                color=connection_color,
+                linewidth=1.0,
+                alpha=0.6,
+                linestyle='-',
+                zorder=0.5,  # Draw behind note bars
+            )
 
     if not minimal:
         unit_label = "beats"

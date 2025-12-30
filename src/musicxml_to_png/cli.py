@@ -237,6 +237,12 @@ Examples:
         action="store_true",
         help="Use a transparent background for the output PNG instead of white.",
     )
+
+    parser.add_argument(
+        "--show-connections",
+        action="store_true",
+        help="Show curved lines connecting adjacent notes (no rest between) within each instrument.",
+    )
     
     args = parser.parse_args()
     
@@ -280,6 +286,9 @@ Examples:
             print(f"Ensemble confidences: {confidences_str}")
 
         _print_ensemble_suggestions(suggestions)
+
+    if args.show_connections:
+        print("Info: --show-connections is in beta and may have edge cases. Feedback welcome!", file=sys.stderr)
 
     try:
         # Validate staccato factor
@@ -330,6 +339,7 @@ Examples:
             slice_end=slice_end,
             timeline_unit=args.timeline_unit,
             transparent=args.transparent,
+            show_connections=args.show_connections,
         )
         if not args.no_output:
             print(f"Successfully created visualization: {result_path}")

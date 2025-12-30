@@ -9,6 +9,7 @@ from musicxml_to_png.extract import (
     extract_notes,
     extract_rehearsal_marks,
     build_measure_offset_map,
+    detect_note_connections,
 )
 from musicxml_to_png.models import DEFAULT_STACCATO_FACTOR, MIN_STACCATO_FACTOR, MAX_STACCATO_FACTOR, RehearsalMark
 from musicxml_to_png.visualize import create_visualization
@@ -121,6 +122,7 @@ def convert_musicxml_to_png(
     slice_end: Optional[float] = None,
     timeline_unit: str = "bar",
     transparent: bool = False,
+    show_connections: bool = False,
 ) -> Path:
     """Convert a MusicXML file to a PNG visualization."""
     input_path = Path(input_path)
@@ -184,6 +186,11 @@ def convert_musicxml_to_png(
     if title is None:
         title = input_path.stem
 
+    # Detect note connections if requested
+    connections = None
+    if show_connections:
+        connections = detect_note_connections(note_events)
+
     create_visualization(
         note_events,
         output_path,
@@ -202,6 +209,8 @@ def convert_musicxml_to_png(
         time_stretch=time_stretch,
         fig_width=fig_width,
         transparent=transparent,
+        show_connections=show_connections,
+        connections=connections,
     )
 
     return output_path

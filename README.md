@@ -45,6 +45,7 @@ musicxml-to-png your-score.mxl --ensemble bigband --minimal -o output.png
 - Custom titles (`-t "Custom Title"`)
 - Output DPI control: `--dpi` (default 150)
 - Transparent background: `--transparent` for PNG output with transparent backgrounds (useful for overlays)
+- Note connections (beta): `--show-connections` to visualize connections between adjacent notes with straight lines
 - Timeline units for x-axis: bars/measures (default) or beats (`--timeline-unit measure` or `--timeline-unit beat`), labels are 1-indexed
 
 **Advanced Options:**
@@ -103,6 +104,9 @@ musicxml-to-png input.mxl --no-title           # Hide title
 # Output quality
 musicxml-to-png input.mxl --dpi 300            # Higher resolution (default 150)
 
+# Note connections (beta)
+musicxml-to-png input.mxl --show-connections   # Show connections between adjacent notes
+
 # Timeline display
 musicxml-to-png input.mxl --timeline-unit beat  # Show beats instead of bars
 ```
@@ -151,6 +155,7 @@ output_path = convert_musicxml_to_png(
     minimal=True,                # Remove all labels/borders
     ensemble="bigband",          # Use bigband categorization
     transparent=True,            # Use transparent background
+    show_connections=True,       # Show note connections (beta)
     show_rehearsal_marks=False,  # Hide rehearsal marks
     show_legend=False,           # Hide legend
     show_title=False,            # Hide title

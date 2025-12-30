@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - CLI flag `--transparent` (and library argument `transparent`) to generate PNG output with transparent backgrounds instead of white, enabling overlays on any background color.
+- CLI flag `--show-connections` (beta) to visualize connections between adjacent notes using straight lines. Connections are per-instrument and only connect notes on different pitches. Note: This feature is in beta and may have edge cases.
 
 ### Changed
 

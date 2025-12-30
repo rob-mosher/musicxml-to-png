@@ -41,6 +41,7 @@ class NoteEvent:
         dynamic_level: float = DEFAULT_DYNAMIC_LEVEL,
         dynamic_mark: Optional[str] = None,
         pitch_overlap: int = 1,
+        original_duration: Optional[float] = None,
     ):
         self.pitch_midi = pitch_midi
         self.start_time = start_time
@@ -50,6 +51,7 @@ class NoteEvent:
         self.dynamic_level = dynamic_level
         self.dynamic_mark = dynamic_mark
         self.pitch_overlap = pitch_overlap
+        self.original_duration = original_duration if original_duration is not None else duration
 
 
 class RehearsalMark:

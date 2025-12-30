@@ -120,6 +120,7 @@ def _split_events_by_pitch_overlap(note_events: List[NoteEvent]) -> List[NoteEve
                         dynamic_level=event.dynamic_level,
                         dynamic_mark=event.dynamic_mark,
                         pitch_overlap=len(events),
+                        original_duration=event.original_duration,
                     )
                 )
             continue
@@ -145,6 +146,14 @@ def _split_events_by_pitch_overlap(note_events: List[NoteEvent]) -> List[NoteEve
                 if clipped_end <= clipped_start:
                     continue
 
+                # Calculate original_duration for the clipped segment
+                # The key insight: we need to preserve where the note originally ended
+                # relative to the segment, not clip it to the visual duration boundaries
+                # For connection detection: clipped_start + clipped_original_duration should 
+                # equal where the note originally ended relative to segment_start
+                original_end_absolute = event.start_time + event.original_duration
+                clipped_original_duration = max(0.0, original_end_absolute - clipped_start)
+
                 split_events.append(
                     NoteEvent(
                         pitch_midi=event.pitch_midi,
@@ -155,6 +164,7 @@ def _split_events_by_pitch_overlap(note_events: List[NoteEvent]) -> List[NoteEve
                         dynamic_level=event.dynamic_level,
                         dynamic_mark=event.dynamic_mark,
                         pitch_overlap=overlap,
+                        original_duration=clipped_original_duration,
                     )
                 )
 
@@ -215,6 +225,18 @@ def _clip_to_window(note_events: List[NoteEvent], window_start: float, window_en
         if duration <= 0:
             continue
 
+        # Calculate original_duration for the clipped segment
+        # We need to preserve where the note originally ended for connection detection
+        # The key: clipped_start + clipped_original_duration should equal original_end - window_start
+        original_start = event.start_time
+        original_end = event.start_time + event.original_duration
+        
+        # Calculate where the note originally ended relative to the window start
+        original_end_relative = original_end - window_start
+        
+        # clipped_original_duration should make clipped_start + clipped_original_duration = original_end_relative
+        clipped_original_duration = max(0.0, original_end_relative - new_start)
+
         clipped.append(
             NoteEvent(
                 pitch_midi=event.pitch_midi,
@@ -225,6 +247,7 @@ def _clip_to_window(note_events: List[NoteEvent], window_start: float, window_en
                 dynamic_level=event.dynamic_level,
                 dynamic_mark=event.dynamic_mark,
                 pitch_overlap=event.pitch_overlap,
+                original_duration=clipped_original_duration,
             )
         )
     return clipped
@@ -315,14 +338,16 @@ def extract_notes(
             if isinstance(element, note.Note):
                 pitch_obj = element.pitch
                 if pitch_obj.midi is not None:
+                    original_duration = float(element.quarterLength)
                     is_staccato = any(isinstance(art, articulations.Staccato) for art in element.articulations)
-                    effective_duration = float(element.quarterLength) * (staccato_factor if is_staccato else 1.0)
+                    effective_duration = original_duration * (staccato_factor if is_staccato else 1.0)
                     tie_type = element.tie.type if element.tie is not None else None
                     note_data.append(
                         (
                             float(pitch_obj.midi),
                             absolute_offset,
                             effective_duration,
+                            original_duration,
                             tie_type,
                             element,
                         )
@@ -330,14 +355,16 @@ def extract_notes(
             elif isinstance(element, chord.Chord):
                 for pitch_obj in element.pitches:
                     if pitch_obj.midi is not None:
+                        original_duration = float(element.quarterLength)
                         is_staccato = any(isinstance(art, articulations.Staccato) for art in element.articulations)
-                        effective_duration = float(element.quarterLength) * (staccato_factor if is_staccato else 1.0)
+                        effective_duration = original_duration * (staccato_factor if is_staccato else 1.0)
                         tie_type = element.tie.type if element.tie is not None else None
                         note_data.append(
                             (
                                 float(pitch_obj.midi),
                                 absolute_offset,
                                 effective_duration,
+                                original_duration,
                                 tie_type,
                                 element,
                             )
@@ -382,18 +409,20 @@ def extract_notes(
 
             return _clamp_dynamic_level(level), mark
 
-        for i, (pitch_midi, offset, duration, tie_type, element) in enumerate(note_data):
+        for i, (pitch_midi, offset, duration, original_duration, tie_type, element) in enumerate(note_data):
             if i in processed_indices:
                 continue
 
             if tie_type == "start":
                 total_duration = duration
+                total_original_duration = original_duration
                 dynamic_level, dynamic_mark = get_dynamic_at(offset, element)
 
                 for j, (
                     other_pitch,
                     other_offset,
                     other_duration,
+                    other_original_duration,
                     other_tie_type,
                     _,
                 ) in enumerate(note_data[i + 1 :], start=i + 1):
@@ -402,6 +431,7 @@ def extract_notes(
 
                     if (other_pitch == pitch_midi and other_tie_type == "stop" and other_offset >= offset):
                         total_duration += other_duration
+                        total_original_duration += other_original_duration
                         processed_indices.add(j)
                         break
                     elif other_pitch == pitch_midi and other_tie_type == "start":
@@ -416,6 +446,7 @@ def extract_notes(
                         instrument_label=instrument_label,
                         dynamic_level=dynamic_level,
                         dynamic_mark=dynamic_mark,
+                        original_duration=total_original_duration,
                     )
                 )
                 processed_indices.add(i)
@@ -431,6 +462,7 @@ def extract_notes(
                             instrument_label=instrument_label,
                             dynamic_level=dynamic_level,
                             dynamic_mark=dynamic_mark,
+                            original_duration=original_duration,
                         )
                     )
                     processed_indices.add(i)
@@ -445,6 +477,7 @@ def extract_notes(
                         instrument_label=instrument_label,
                         dynamic_level=dynamic_level,
                         dynamic_mark=dynamic_mark,
+                        original_duration=original_duration,
                     )
                 )
                 processed_indices.add(i)
@@ -455,6 +488,61 @@ def extract_notes(
     if split_overlaps:
         return _split_events_by_pitch_overlap(note_events)
     return _assign_pitch_overlap_unsplit(note_events)
+
+
+def detect_note_connections(note_events: List[NoteEvent]) -> List[Tuple[int, int]]:
+    """
+    Detect connections between adjacent notes (no rest between) per instrument.
+    
+    Two notes are connected if note1.start_time + note1.original_duration == note2.start_time
+    and they belong to the same instrument.
+    
+    Returns:
+        List of tuples (note1_index, note2_index) representing connections.
+    """
+    connections: List[Tuple[int, int]] = []
+    
+    # Group notes by instrument
+    notes_by_instrument: Dict[str, List[Tuple[int, NoteEvent]]] = {}
+    for idx, event in enumerate(note_events):
+        instrument_key = event.instrument_label
+        if instrument_key not in notes_by_instrument:
+            notes_by_instrument[instrument_key] = []
+        notes_by_instrument[instrument_key].append((idx, event))
+    
+    # For each instrument, find adjacent notes
+    for instrument_notes in notes_by_instrument.values():
+        # Sort by start_time, then by pitch for consistent ordering
+        instrument_notes.sort(key=lambda item: (item[1].start_time, item[1].pitch_midi))
+        
+        for i in range(len(instrument_notes) - 1):
+            idx1, note1 = instrument_notes[i]
+            
+            # Check all subsequent notes to find the one that starts exactly where this one ends
+            # (handles cases where multiple notes might start at the same time)
+            note1_end = note1.start_time + note1.original_duration
+            
+            for j in range(i + 1, len(instrument_notes)):
+                idx2, note2 = instrument_notes[j]
+                note2_start = note2.start_time
+                
+                # If note2 starts after note1 ends, no need to check further (sorted by start_time)
+                if note2_start > note1_end + 0.001:
+                    break
+                
+                # Only connect notes on different pitches
+                # Notes on the same pitch that are adjacent are likely overlapping segments
+                # from split_overlaps, not sequential notes
+                if note1.pitch_midi == note2.pitch_midi:
+                    continue
+                
+                # Check if notes are adjacent (no rest between)
+                # Use small epsilon for floating point comparison
+                if abs(note1_end - note2_start) < 0.001:
+                    connections.append((idx1, idx2))
+                    break  # Only connect to the first note that starts at this position
+    
+    return connections
 
 
 # Public aliases for external imports

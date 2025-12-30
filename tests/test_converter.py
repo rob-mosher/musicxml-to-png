@@ -14,6 +14,7 @@ from musicxml_to_png.extract import (
     extract_notes,
     extract_rehearsal_marks,
     build_measure_offset_map,
+    detect_note_connections,
 )
 from musicxml_to_png.visualize import create_visualization
 from musicxml_to_png.models import (
@@ -1269,6 +1270,104 @@ class TestConvertMusicxmlToPng:
         assert output_path.exists()
         assert output_path.suffix == ".png"
 
+    def test_show_connections_conversion(self, tmp_path):
+        """Test conversion with show_connections enabled."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Violin())
+        n1 = note.Note("C4")
+        n1.quarterLength = 1.0
+        part.append(n1)
+        n2 = note.Note("D4")
+        n2.quarterLength = 1.0
+        part.insert(1.0, n2)  # Adjacent note
+        score.append(part)
+        
+        input_path = tmp_path / "test.mxl"
+        score.write("musicxml", input_path)
+        
+        output_path = convert_musicxml_to_png(input_path, show_connections=True)
+        
+        assert output_path.exists()
+        assert output_path.suffix == ".png"
+
+
+class TestNoteConnections:
+    """Test note connection detection and visualization."""
+
+    def test_connection_detection_adjacent_notes(self):
+        """Test that adjacent notes (no rest) are detected as connected."""
+        note_events = [
+            NoteEvent(pitch_midi=60.0, start_time=0.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, original_duration=1.0),
+            NoteEvent(pitch_midi=62.0, start_time=1.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, original_duration=1.0),
+            NoteEvent(pitch_midi=64.0, start_time=2.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, original_duration=1.0),
+        ]
+        
+        connections = detect_note_connections(note_events)
+        
+        assert len(connections) == 2
+        assert (0, 1) in connections
+        assert (1, 2) in connections
+
+    def test_connection_detection_with_rest(self):
+        """Test that notes separated by a rest are not connected."""
+        note_events = [
+            NoteEvent(pitch_midi=60.0, start_time=0.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, original_duration=1.0),
+            NoteEvent(pitch_midi=62.0, start_time=2.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, original_duration=1.0),  # Gap at 1.0
+        ]
+        
+        connections = detect_note_connections(note_events)
+        
+        assert len(connections) == 0
+
+    def test_connection_detection_per_instrument(self):
+        """Test that connections are only within the same instrument."""
+        note_events = [
+            NoteEvent(pitch_midi=60.0, start_time=0.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, instrument_label="Violin", original_duration=1.0),
+            NoteEvent(pitch_midi=62.0, start_time=1.0, duration=1.0, instrument_family=ORCHESTRA_WINDS, instrument_label="Flute", original_duration=1.0),
+        ]
+        
+        connections = detect_note_connections(note_events)
+        
+        assert len(connections) == 0  # Different instruments, no connection
+
+    def test_connection_detection_staccato_notes(self):
+        """Test that staccato notes still connect if adjacent (using original_duration)."""
+        note_events = [
+            NoteEvent(pitch_midi=60.0, start_time=0.0, duration=0.4, instrument_family=ORCHESTRA_STRINGS, original_duration=1.0),  # Staccato shortened
+            NoteEvent(pitch_midi=62.0, start_time=1.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, original_duration=1.0),  # Adjacent based on original
+        ]
+        
+        connections = detect_note_connections(note_events)
+        
+        assert len(connections) == 1
+        assert (0, 1) in connections
+
+    def test_connection_visualization(self, tmp_path):
+        """Test that connections are rendered when show_connections=True."""
+        output_path = tmp_path / "output.png"
+        
+        note_events = [
+            NoteEvent(pitch_midi=60.0, start_time=0.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, original_duration=1.0),
+            NoteEvent(pitch_midi=62.0, start_time=1.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, original_duration=1.0),
+        ]
+        
+        connections = [(0, 1)]
+        
+        create_visualization(
+            note_events,
+            output_path,
+            ensemble=ENSEMBLE_ORCHESTRA,
+            show_connections=True,
+            connections=connections,
+        )
+        
+        assert output_path.exists()
+
+
+class TestConvertMusicxmlToPngErrors:
+    """Test error handling in conversion function."""
+
     def test_file_not_found_error(self):
         """Test that missing file raises FileNotFoundError."""
         non_existent = Path("/nonexistent/file.mxl")
@@ -1297,6 +1396,10 @@ class TestConvertMusicxmlToPng:
         
         with pytest.raises(ValueError, match="No notes found"):
             convert_musicxml_to_png(input_path)
+
+
+class TestConvertMusicxmlToPngParameters:
+    """Test various parameter combinations in conversion function."""
 
     def test_ensemble_parameter(self, tmp_path):
         """Test conversion with different ensemble types."""
