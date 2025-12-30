@@ -7,6 +7,7 @@ from musicxml_to_png.visualize import (
     compute_figure_dimensions,
     compute_padding,
     generate_time_ticks,
+    ConnectionConfig,
 )
 from musicxml_to_png.models import NoteEvent
 
@@ -93,3 +94,12 @@ def test_generate_time_ticks_builds_beat_ticks_when_no_measures():
     assert tick_spec.labels[0] == "1"
     assert tick_spec.labels[-1] == "9"  # inclusive of the last beat
     assert tick_spec.minor[0] == 0.0
+
+
+def test_connection_config_alpha_fade():
+    cfg = ConnectionConfig(alpha=0.6, min_alpha=0.3, fade_start=2.0, fade_end=4.0)
+
+    assert cfg.alpha_for_length(1.0) == pytest.approx(0.6)
+    mid_alpha = cfg.alpha_for_length(2.5)
+    assert 0.3 < mid_alpha < 0.6  # fades between start/end
+    assert cfg.alpha_for_length(5.0) == pytest.approx(0.3)

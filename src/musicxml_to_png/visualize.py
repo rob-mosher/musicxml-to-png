@@ -1,11 +1,12 @@
 """Visualization helpers for MusicXML note events."""
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, replace, field
 from pathlib import Path
 from typing import List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+from matplotlib.lines import Line2D
 
 from musicxml_to_png.instruments import (
     BIGBAND_RHYTHM_SECTION,
@@ -67,6 +68,28 @@ class ColorContext:
 
 
 @dataclass
+class ConnectionConfig:
+    """Visual controls for connection lines."""
+
+    alpha: float = 0.6
+    min_alpha: float = 0.25
+    fade_start: float = 4.0  # beats where fading begins
+    fade_end: float = 8.0  # beats where alpha reaches min_alpha
+    max_gap: Optional[float] = None  # skip drawing if connection gap exceeds this (in beats)
+    linewidth: float = 1.0
+
+    def alpha_for_length(self, length: float) -> float:
+        if self.fade_end <= self.fade_start:
+            return max(0.0, min(1.0, self.alpha))
+        if length <= self.fade_start:
+            return max(0.0, min(1.0, self.alpha))
+        fade_range = self.fade_end - self.fade_start
+        t = min(1.0, max(0.0, (length - self.fade_start) / fade_range))
+        faded = self.alpha * (1.0 - t)
+        return max(self.min_alpha, min(1.0, faded))
+
+
+@dataclass
 class VisualizationConfig:
     timeline_unit: str = "bar"
     show_grid: bool = True
@@ -80,6 +103,7 @@ class VisualizationConfig:
     dpi: int = 150
     transparent: bool = False
     show_connections: bool = False
+    connections: ConnectionConfig = field(default_factory=ConnectionConfig)
 
     def with_overrides(
         self,
@@ -95,6 +119,7 @@ class VisualizationConfig:
         dpi: Optional[int] = None,
         transparent: Optional[bool] = None,
         show_connections: Optional[bool] = None,
+        connections: Optional[ConnectionConfig] = None,
     ) -> "VisualizationConfig":
         """
         Build a new config overriding only the provided values.
@@ -113,6 +138,7 @@ class VisualizationConfig:
             dpi=self.dpi if dpi is None else dpi,
             transparent=self.transparent if transparent is None else transparent,
             show_connections=self.show_connections if show_connections is None else show_connections,
+            connections=self.connections if connections is None else connections,
         )
 
 
@@ -275,6 +301,7 @@ def _draw_note_connections(
     color_context: ColorContext,
     family_mode: bool,
     ensemble: str,
+    connection_config: ConnectionConfig,
 ) -> None:
     if not connections:
         return
@@ -291,14 +318,19 @@ def _draw_note_connections(
         x2 = note2.start_time
         y2 = note2.pitch_midi
 
+        gap = x2 - x1
+        if connection_config.max_gap is not None and gap > connection_config.max_gap:
+            continue
+
         connection_color = _color_for_event(note1, color_context, family_mode, ensemble)
+        alpha = connection_config.alpha_for_length(gap if gap >= 0 else 0.0)
 
         ax.plot(
             [x1, x2],
             [y1, y2],
             color=connection_color,
-            linewidth=1.0,
-            alpha=0.6,
+            linewidth=connection_config.linewidth,
+            alpha=alpha,
             linestyle="-",
             zorder=0.5,
         )
@@ -443,6 +475,8 @@ def _build_legend(
     ensemble: str,
     minimal: bool,
     show_legend: bool,
+    show_connections: bool,
+    connection_config: ConnectionConfig,
 ) -> None:
     legend_elements = []
 
@@ -486,6 +520,18 @@ def _build_legend(
                 label="Width = stacked pitches; Opacity = dynamics",
             )
         )
+        if show_connections:
+            legend_elements.append(
+                Line2D(
+                    [0],
+                    [0],
+                    color="black",
+                    alpha=connection_config.alpha,
+                    linewidth=connection_config.linewidth,
+                    linestyle="-",
+                    label="Lines = adjacent notes",
+                )
+            )
         ax.legend(handles=legend_elements, loc="upper right", fontsize=10)
 
 
@@ -520,6 +566,7 @@ def create_visualization(
     tick_spec: Optional[TimeTickSpec] = None,
     config: Optional[VisualizationConfig] = None,
     inputs: Optional[VisualizationInputs] = None,
+    connection_config: Optional[ConnectionConfig] = None,
 ) -> None:
     """
     Create a 2D visualization of note events and save as PNG.
@@ -550,7 +597,9 @@ def create_visualization(
         dpi=dpi,
         transparent=transparent,
         show_connections=show_connections,
+        connections=connection_config,
     )
+    resolved_connection_config = resolved_config.connections if resolved_config.connections else ConnectionConfig()
 
     bounds = compute_plot_bounds(note_events, score_duration)
     fig_width, fig_height = compute_figure_dimensions(bounds, resolved_config.time_stretch, resolved_config.fig_width)
@@ -586,7 +635,15 @@ def create_visualization(
     )
 
     if resolved_config.show_connections and connections:
-        _draw_note_connections(ctx.ax, note_events, connections, color_context, family_mode, resolved_config.ensemble)
+        _draw_note_connections(
+            ctx.ax,
+            note_events,
+            connections,
+            color_context,
+            family_mode,
+            resolved_config.ensemble,
+            resolved_connection_config,
+        )
 
     _apply_axis_labels(ctx.ax, resolved_config.timeline_unit, resolved_config.minimal)
 
@@ -611,6 +668,8 @@ def create_visualization(
         resolved_config.ensemble,
         resolved_config.minimal,
         resolved_config.show_legend,
+        resolved_config.show_connections,
+        resolved_connection_config,
     )
     _apply_grid(ctx.ax, resolved_config.show_grid)
 
