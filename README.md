@@ -173,16 +173,6 @@ musicxml-to-png input.xml --ensemble bigband
 musicxml-to-png input.xml --ensemble bigband --minimal --no-grid -o output.png
 ```
 
-### Visual examples (placeholders)
-
-Screenshots to be added for the most visible options:
-
-- Default view (grid + labels)
-- Minimal view (`--minimal`)
-- Ensemble grouping (orchestra/bigband palettes)
-- Overlap handling: default split vs. legacy `--no-overlap-splitting`
-- Wider timeline (`--time-stretch 1.5`) vs. tight (`--time-stretch 0.8`)
-
 ### Python Library
 
 Use as a library in your Python code:
