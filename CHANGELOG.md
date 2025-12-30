@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added coverage for connection alpha fading behavior.
 - Exposed connection styling controls via CLI flags (`--connection-*`) and library params (max-gap, alpha, fade, linewidth).
 - Added CLI and converter regression tests to ensure connection styling flags propagate end-to-end.
+- Added optional connection curvature (`--connection-curve-height-factor`) with tests and README docs.
 
 ## [0.5.0] - 2025-12-29
 

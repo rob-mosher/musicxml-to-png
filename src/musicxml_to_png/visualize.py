@@ -7,6 +7,8 @@ from typing import List, Optional, Tuple
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.lines import Line2D
+from matplotlib.path import Path as MplPath
+from matplotlib.patches import PathPatch
 
 from musicxml_to_png.instruments import (
     BIGBAND_RHYTHM_SECTION,
@@ -77,6 +79,7 @@ class ConnectionConfig:
     fade_end: float = 8.0  # beats where alpha reaches min_alpha
     max_gap: Optional[float] = None  # skip drawing if connection gap exceeds this (in beats)
     linewidth: float = 1.0
+    curve_height_factor: float = 0.0  # 0 = straight line; positive values bend upward
 
     def alpha_for_length(self, length: float) -> float:
         if self.fade_end <= self.fade_start:
@@ -96,6 +99,7 @@ class ConnectionConfig:
         fade_end: Optional[float] = None,
         max_gap: Optional[float] = None,
         linewidth: Optional[float] = None,
+        curve_height_factor: Optional[float] = None,
     ) -> "ConnectionConfig":
         return ConnectionConfig(
             alpha=self.alpha if alpha is None else alpha,
@@ -104,6 +108,7 @@ class ConnectionConfig:
             fade_end=self.fade_end if fade_end is None else fade_end,
             max_gap=self.max_gap if max_gap is None else max_gap,
             linewidth=self.linewidth if linewidth is None else linewidth,
+            curve_height_factor=self.curve_height_factor if curve_height_factor is None else curve_height_factor,
         )
 
 
@@ -343,15 +348,36 @@ def _draw_note_connections(
         connection_color = _color_for_event(note1, color_context, family_mode, ensemble)
         alpha = connection_config.alpha_for_length(gap if gap >= 0 else 0.0)
 
-        ax.plot(
-            [x1, x2],
-            [y1, y2],
-            color=connection_color,
-            linewidth=connection_config.linewidth,
-            alpha=alpha,
-            linestyle="-",
-            zorder=0.5,
-        )
+        if connection_config.curve_height_factor > 0 and gap >= 0:
+            cx = (x1 + x2) / 2.0
+            cy = (y1 + y2) / 2.0 + connection_config.curve_height_factor * gap
+            path_data = [
+                (MplPath.MOVETO, (x1, y1)),
+                (MplPath.CURVE3, (cx, cy)),
+                (MplPath.CURVE3, (x2, y2)),
+            ]
+            codes, verts = zip(*path_data)
+            path = MplPath(verts, codes)
+            patch = PathPatch(
+                path,
+                facecolor="none",
+                edgecolor=connection_color,
+                linewidth=connection_config.linewidth,
+                alpha=alpha,
+                linestyle="-",
+                zorder=0.5,
+            )
+            ax.add_patch(patch)
+        else:
+            ax.plot(
+                [x1, x2],
+                [y1, y2],
+                color=connection_color,
+                linewidth=connection_config.linewidth,
+                alpha=alpha,
+                linestyle="-",
+                zorder=0.5,
+            )
 
 
 def _apply_axis_labels(ax, timeline_unit: str, minimal: bool) -> None:

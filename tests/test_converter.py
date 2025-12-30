@@ -16,7 +16,7 @@ from musicxml_to_png.extract import (
     build_measure_offset_map,
     detect_note_connections,
 )
-from musicxml_to_png.visualize import create_visualization
+from musicxml_to_png.visualize import create_visualization, ConnectionConfig
 from musicxml_to_png.models import (
     NoteEvent,
     RehearsalMark,
@@ -1402,6 +1402,27 @@ class TestNoteConnections:
             connections=connections,
         )
         
+        assert output_path.exists()
+
+    def test_connection_curve_render(self, tmp_path):
+        """Connection curves should render without error when enabled."""
+        output_path = tmp_path / "curve.png"
+
+        note_events = [
+            NoteEvent(pitch_midi=60.0, start_time=0.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, original_duration=1.0),
+            NoteEvent(pitch_midi=62.0, start_time=2.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, original_duration=1.0),
+        ]
+        connections = [(0, 1)]
+
+        create_visualization(
+            note_events,
+            output_path,
+            ensemble=ENSEMBLE_ORCHESTRA,
+            show_connections=True,
+            connections=connections,
+            connection_config=ConnectionConfig(curve_height_factor=0.3),
+        )
+
         assert output_path.exists()
 
     def test_connection_config_passes_through_converter(self, tmp_path, monkeypatch):

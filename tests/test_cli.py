@@ -152,6 +152,8 @@ class TestCLIArguments:
             "6",
             "--connection-linewidth",
             "1.5",
+            "--connection-curve-height-factor",
+            "3.0",
         ]
         with patch("sys.argv", argv):
             main()
@@ -163,6 +165,7 @@ class TestCLIArguments:
         assert captured.get("connection_fade_start") == 3
         assert captured.get("connection_fade_end") == 6
         assert captured.get("connection_linewidth") == 1.5
+        assert captured.get("connection_curve_height_factor") == 3.0
         assert (tmp_path / "out.png").exists()
 
     def test_no_legend_flag(self, sample_musicxml_file, tmp_path, capsys):

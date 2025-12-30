@@ -137,6 +137,7 @@ def convert_musicxml_to_png(
     connection_fade_start: Optional[float] = None,
     connection_fade_end: Optional[float] = None,
     connection_linewidth: Optional[float] = None,
+    connection_curve_height_factor: Optional[float] = None,
 ) -> Path:
     """Convert a MusicXML file to a PNG visualization."""
     input_path = Path(input_path)
@@ -224,6 +225,7 @@ def convert_musicxml_to_png(
         fade_end=connection_fade_end,
         max_gap=connection_max_gap,
         linewidth=connection_linewidth,
+        curve_height_factor=connection_curve_height_factor,
     )
     viz_config = viz_config.with_overrides(connections=connection_config)
 
