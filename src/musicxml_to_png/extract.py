@@ -195,6 +195,41 @@ def _assign_pitch_overlap_unsplit(note_events: List[NoteEvent]) -> List[NoteEven
     return note_events
 
 
+def _clip_to_window(note_events: List[NoteEvent], window_start: float, window_end: float) -> List[NoteEvent]:
+    """
+    Clip note events to a time window and re-base start times to window_start.
+    """
+    if window_start is None or window_end is None:
+        return note_events
+
+    clipped: List[NoteEvent] = []
+    for event in note_events:
+        ev_start = event.start_time
+        ev_end = event.start_time + event.duration
+        if ev_end <= window_start or ev_start >= window_end:
+            continue
+
+        new_start = max(ev_start, window_start) - window_start
+        new_end = min(ev_end, window_end) - window_start
+        duration = new_end - new_start
+        if duration <= 0:
+            continue
+
+        clipped.append(
+            NoteEvent(
+                pitch_midi=event.pitch_midi,
+                start_time=new_start,
+                duration=duration,
+                instrument_family=event.instrument_family,
+                instrument_label=event.instrument_label,
+                dynamic_level=event.dynamic_level,
+                dynamic_mark=event.dynamic_mark,
+                pitch_overlap=event.pitch_overlap,
+            )
+        )
+    return clipped
+
+
 def extract_rehearsal_marks(
     score: stream.Score,
     measure_offsets: Optional[Dict[str, float]] = None,
@@ -225,6 +260,7 @@ def extract_notes(
     measure_offsets: Optional[Dict[str, float]] = None,
     split_overlaps: bool = True,
     staccato_factor: float = DEFAULT_STACCATO_FACTOR,
+    slice_window: Optional[Tuple[float, float]] = None,
 ) -> List[NoteEvent]:
     """
     Extract note events from a music21 Score.
@@ -412,6 +448,9 @@ def extract_notes(
                     )
                 )
                 processed_indices.add(i)
+
+    if slice_window is not None:
+        note_events = _clip_to_window(note_events, slice_window[0], slice_window[1])
 
     if split_overlaps:
         return _split_events_by_pitch_overlap(note_events)

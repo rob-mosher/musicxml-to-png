@@ -51,6 +51,17 @@ def _print_ensemble_suggestions(suggestions) -> None:
         )
 
 
+def _parse_range(value: str, cast_type):
+    if "-" not in value:
+        raise ValueError("Range must be in the form start-end")
+    start_str, end_str = value.split("-", 1)
+    start = cast_type(start_str.strip())
+    end = cast_type(end_str.strip())
+    if end <= start:
+        raise ValueError("End must be greater than start in range")
+    return start, end
+
+
 def main() -> None:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -205,6 +216,21 @@ Examples:
             f"default {DEFAULT_STACCATO_FACTOR})."
         ),
     )
+
+    parser.add_argument(
+        "--slice-range",
+        type=str,
+        default=None,
+        help="Range to render in the form start-end (e.g., bars 12-24 or beats 48-72). Bars are 1-based; end bar slices until the start of the next bar.",
+    )
+
+    parser.add_argument(
+        "--timeline-unit",
+        type=str,
+        choices=["beat", "bar", "measure"],
+        default="bar",
+        help="Display the timeline using bars/measures (default) or beats on the x-axis.",
+    )
     
     args = parser.parse_args()
     
@@ -258,6 +284,23 @@ Examples:
             )
             sys.exit(1)
 
+        slice_mode = None
+        slice_start = None
+        slice_end = None
+        if args.slice_range:
+            mode_arg = args.timeline_unit or "bar"
+            if mode_arg in ("bar", "measure"):
+                caster = int
+            else:
+                caster = float
+            try:
+                start, end = _parse_range(args.slice_range, caster)
+            except Exception as e:
+                print(f"Error parsing --slice-range: {e}", file=sys.stderr)
+                sys.exit(1)
+            slice_mode = "bar" if mode_arg == "measure" else mode_arg
+            slice_start, slice_end = start, end
+
         # Perform conversion
         result_path = convert_musicxml_to_png(
             input_path=input_path,
@@ -276,6 +319,10 @@ Examples:
             dpi=args.dpi,
             split_overlaps=not args.no_overlap_splitting,
             staccato_factor=args.staccato_factor,
+            slice_mode=slice_mode,
+            slice_start=slice_start,
+            slice_end=slice_end,
+            timeline_unit=args.timeline_unit,
         )
         if not args.no_output:
             print(f"Successfully created visualization: {result_path}")

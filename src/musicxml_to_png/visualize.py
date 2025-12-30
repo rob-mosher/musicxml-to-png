@@ -36,10 +36,12 @@ def create_visualization(
     output_path: Path,
     title: Optional[str] = None,
     score_duration: Optional[float] = None,
+    timeline_unit: str = "bar",
     show_grid: bool = True,
     minimal: bool = False,
     ensemble: str = ENSEMBLE_UNGROUPED,
     rehearsal_marks: Optional[List[RehearsalMark]] = None,
+    measure_ticks: Optional[List[tuple[int, float]]] = None,
     show_legend: bool = True,
     show_title: bool = True,
     write_output: bool = True,
@@ -136,7 +138,12 @@ def create_visualization(
         )
 
     if not minimal:
-        ax.set_xlabel("Time (beats)", fontsize=12)
+        unit_label = "beats"
+        if timeline_unit == "bar":
+            unit_label = "bars"
+        elif timeline_unit == "measure":
+            unit_label = "measures"
+        ax.set_xlabel(f"Time ({unit_label})", fontsize=12)
         ax.set_ylabel("Pitch (MIDI note number)", fontsize=12)
 
     if title and not minimal and show_title:
@@ -149,24 +156,35 @@ def create_visualization(
     ax.set_ylim(min_pitch - pitch_padding, max_pitch + pitch_padding + extra_top_padding)
     ax.set_xlim(min_time - time_padding, max_time + time_padding)
 
-    major_xticks = []
-    beat = 0
-    while beat <= max_time + time_padding:
-        major_xticks.append(beat)
-        beat += 1
-
-    minor_xticks = []
-    if min_duration > 0:
-        tick = min_time
-        while tick <= max_time + time_padding:
-            minor_xticks.append(tick)
-            tick += min_duration
-
-    if not minimal:
-        ax.set_xticks(major_xticks, minor=False)
-        ax.set_xticks(minor_xticks, minor=True)
+    if timeline_unit in ("bar", "measure") and measure_ticks:
+        major_xticks = [offset for _, offset in measure_ticks]
+        labels = [str(num) for num, _ in measure_ticks]
+        if not minimal:
+            ax.set_xticks(major_xticks)
+            ax.set_xticklabels(labels)
+        else:
+            ax.set_xticks([])
     else:
-        ax.set_xticks([])
+        major_xticks = []
+        beat = 0
+        while beat <= max_time + time_padding:
+            major_xticks.append(beat)
+            beat += 1
+
+        minor_xticks = []
+        if min_duration > 0:
+            tick = min_time
+            while tick <= max_time + time_padding:
+                minor_xticks.append(tick)
+                tick += min_duration
+
+        if not minimal:
+            ax.set_xticks(major_xticks, minor=False)
+            ax.set_xticks(minor_xticks, minor=True)
+            beat_labels = [f"{tick + 1:g}" for tick in major_xticks]
+            ax.set_xticklabels(beat_labels, minor=False)
+        else:
+            ax.set_xticks([])
 
     if not minimal:
         y_ticks = list(range(int(min_pitch - pitch_padding), int(max_pitch + pitch_padding) + 1))
@@ -268,4 +286,3 @@ def create_visualization(
     if write_output:
         fig.savefig(output_path, dpi=clamped_dpi, bbox_inches="tight")
     plt.close(fig)
-

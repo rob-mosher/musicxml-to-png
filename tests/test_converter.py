@@ -1,12 +1,15 @@
 """Unit tests for MusicXML conversion and visualization."""
 
 from pathlib import Path
+import sys
 import tempfile
 
 import pytest
 from music21 import stream, note, instrument, chord, pitch, tie, dynamics, converter, expressions, articulations
+import matplotlib.pyplot as plt
 
 from musicxml_to_png.converter import convert_musicxml_to_png
+from musicxml_to_png import cli as cli_module
 from musicxml_to_png.extract import (
     extract_notes,
     extract_rehearsal_marks,
@@ -510,6 +513,58 @@ class TestExtractNotes:
         clamped_events = extract_notes(score, ensemble=ENSEMBLE_ORCHESTRA, staccato_factor=0.05)
         assert pytest.approx(clamped_events[0].duration, rel=1e-6) == 2.0 * MIN_STACCATO_FACTOR
 
+    def test_slice_window_clips_and_rebases(self):
+        """Slicing trims notes to window and re-bases start times."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Violin())
+
+        # Three one-beat notes starting at 0,1,2
+        for i, pitch_name in enumerate(["C4", "D4", "E4"]):
+            n = note.Note(pitch_name)
+            n.quarterLength = 1.0
+            part.insert(float(i), n)
+
+        score.append(part)
+
+        # Slice beats 1-3 -> should keep D4 and E4, rebased to 0 and 1
+        events = extract_notes(
+            score,
+            ensemble=ENSEMBLE_ORCHESTRA,
+            slice_window=(1.0, 3.0),
+        )
+
+        assert len(events) == 2
+        starts = [e.start_time for e in events]
+        durations = [e.duration for e in events]
+        pitches = [e.pitch_midi for e in events]
+
+        assert starts == [0.0, 1.0]
+        assert durations == [1.0, 1.0]
+        assert pitches == [62.0, 64.0]  # D4, E4
+
+    def test_slice_window_clips_spanning_note(self):
+        """Notes starting before the window but sustaining into it are clipped and included."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Viola())
+
+        n = note.Note("C4")
+        n.quarterLength = 2.0
+        part.insert(0.0, n)
+        score.append(part)
+
+        events = extract_notes(
+            score,
+            ensemble=ENSEMBLE_ORCHESTRA,
+            slice_window=(0.5, 1.5),
+        )
+
+        assert len(events) == 1
+        assert events[0].start_time == 0.0  # rebased
+        assert events[0].duration == 1.0  # clipped to window
+        assert events[0].pitch_midi == 60.0
+
     def test_percussion_offsets_align_with_other_parts(self):
         """Percussion (timpani) should align with winds/strings when measures differ."""
         fixture_path = Path(__file__).parent / "fixtures" / "test-orchestra-2.mxl"
@@ -614,6 +669,69 @@ class TestCreateVisualization:
         
         create_visualization(note_events, output_path, show_grid=False, ensemble=ENSEMBLE_ORCHESTRA)
         assert output_path.exists()
+
+    def test_timeline_labels_beat_are_1_indexed(self, tmp_path, monkeypatch):
+        """Beat labels on x-axis should be 1-indexed."""
+        output_path = tmp_path / "output.png"
+
+        note_events = [
+            NoteEvent(pitch_midi=60.0, start_time=0.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS),
+        ]
+
+        captured_ax = {}
+        real_subplots = plt.subplots
+
+        def fake_subplots(*args, **kwargs):
+            fig, ax = real_subplots(*args, **kwargs)
+            captured_ax["ax"] = ax
+            return fig, ax
+
+        monkeypatch.setattr(plt, "subplots", fake_subplots)
+
+        create_visualization(
+            note_events,
+            output_path,
+            ensemble=ENSEMBLE_ORCHESTRA,
+            timeline_unit="beat",
+            write_output=False,
+        )
+
+        ax = captured_ax["ax"]
+        labels = [label.get_text() for label in ax.get_xticklabels()]
+        assert labels and labels[0] == "1"
+
+    def test_timeline_labels_bar_are_1_indexed(self, tmp_path, monkeypatch):
+        """Bar/measure labels on x-axis should be 1-indexed."""
+        output_path = tmp_path / "output.png"
+
+        note_events = [
+            NoteEvent(pitch_midi=60.0, start_time=0.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS),
+        ]
+
+        measure_ticks = [(1, 0.0), (2, 4.0)]
+
+        captured_ax = {}
+        real_subplots = plt.subplots
+
+        def fake_subplots(*args, **kwargs):
+            fig, ax = real_subplots(*args, **kwargs)
+            captured_ax["ax"] = ax
+            return fig, ax
+
+        monkeypatch.setattr(plt, "subplots", fake_subplots)
+
+        create_visualization(
+            note_events,
+            output_path,
+            ensemble=ENSEMBLE_ORCHESTRA,
+            timeline_unit="measure",
+            measure_ticks=measure_ticks,
+            write_output=False,
+        )
+
+        ax = captured_ax["ax"]
+        labels = [label.get_text() for label in ax.get_xticklabels()]
+        assert labels and labels[0] == "1"
 
     def test_ungrouped_visualization(self, tmp_path):
         """Test visualization when instruments are ungrouped."""
@@ -777,6 +895,44 @@ class TestConvertMusicxmlToPng:
         assert result_path == output_path
         assert output_path.exists()
 
+    def test_cli_rejects_staccato_below_min(self, tmp_path, capsys, monkeypatch):
+        """CLI should error when staccato factor is below allowed range."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Violin())
+        part.append(note.Note("C4"))
+        score.append(part)
+
+        input_path = tmp_path / "test.mxl"
+        score.write("musicxml", input_path)
+
+        monkeypatch.setattr(sys, "argv", ["musicxml-to-png", str(input_path), "--no-output", "--staccato-factor", "0.05"])
+        with pytest.raises(SystemExit) as exc:
+            cli_module.main()
+
+        assert exc.value.code == 1
+        err = capsys.readouterr().err
+        assert "staccato-factor must be between" in err
+
+    def test_cli_rejects_staccato_above_max(self, tmp_path, capsys, monkeypatch):
+        """CLI should error when staccato factor is above allowed range."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Violin())
+        part.append(note.Note("C4"))
+        score.append(part)
+
+        input_path = tmp_path / "test.mxl"
+        score.write("musicxml", input_path)
+
+        monkeypatch.setattr(sys, "argv", ["musicxml-to-png", str(input_path), "--no-output", "--staccato-factor", "1.5"])
+        with pytest.raises(SystemExit) as exc:
+            cli_module.main()
+
+        assert exc.value.code == 1
+        err = capsys.readouterr().err
+        assert "staccato-factor must be between" in err
+
     def test_disable_rehearsal_marks(self, tmp_path):
         """Conversion should succeed with rehearsal marks disabled."""
         score = stream.Score()
@@ -806,6 +962,175 @@ class TestConvertMusicxmlToPng:
 
         output_path = convert_musicxml_to_png(input_path, show_legend=False)
         assert output_path.exists()
+
+    def test_cli_slice_range_with_measure_unit_aliases_to_bar(self, tmp_path, monkeypatch):
+        """Slice range with timeline_unit measure should map to bar slicing."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Violin())
+        part.append(note.Note("C4"))
+        score.append(part)
+
+        input_path = tmp_path / "test.mxl"
+        score.write("musicxml", input_path)
+
+        captured = {}
+
+        def fake_convert_musicxml_to_png(**kwargs):
+            captured.update(kwargs)
+            class DummyPath(Path):
+                _flavour = Path(".")._flavour
+            return DummyPath("/tmp/out.png")
+
+        monkeypatch.setattr(cli_module, "convert_musicxml_to_png", fake_convert_musicxml_to_png)
+        monkeypatch.setattr(sys, "argv", ["musicxml-to-png", str(input_path), "--no-output", "--timeline-unit", "measure", "--slice-range", "1-2"])
+
+        cli_module.main()
+
+        assert captured.get("slice_mode") == "bar"
+        assert captured.get("slice_start") == 1
+        assert captured.get("slice_end") == 2
+
+    def test_cli_slice_range_defaults_to_bar(self, tmp_path, monkeypatch):
+        """Providing --slice-range alone should default to bar slicing."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Violin())
+        part.append(note.Note("C4"))
+        score.append(part)
+
+        input_path = tmp_path / "test.mxl"
+        score.write("musicxml", input_path)
+
+        captured = {}
+
+        def fake_convert_musicxml_to_png(**kwargs):
+            captured.update(kwargs)
+            class DummyPath(Path):
+                _flavour = Path(".")._flavour
+            return DummyPath("/tmp/out.png")
+
+        monkeypatch.setattr(cli_module, "convert_musicxml_to_png", fake_convert_musicxml_to_png)
+        monkeypatch.setattr(sys, "argv", ["musicxml-to-png", str(input_path), "--no-output", "--slice-range", "3-5"])
+
+        cli_module.main()
+
+        assert captured.get("slice_mode") == "bar"
+        assert captured.get("slice_start") == 3
+        assert captured.get("slice_end") == 5
+
+    def test_cli_timeline_unit_passes_through(self, tmp_path, monkeypatch):
+        """Timeline unit should be forwarded to converter."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Viola())
+        part.append(note.Note("C4"))
+        score.append(part)
+
+        input_path = tmp_path / "test.mxl"
+        score.write("musicxml", input_path)
+
+        captured = {}
+
+        def fake_convert_musicxml_to_png(**kwargs):
+            captured.update(kwargs)
+            class DummyPath(Path):
+                _flavour = Path(".")._flavour
+            return DummyPath("/tmp/out.png")
+
+        monkeypatch.setattr(cli_module, "convert_musicxml_to_png", fake_convert_musicxml_to_png)
+        monkeypatch.setattr(sys, "argv", ["musicxml-to-png", str(input_path), "--no-output", "--timeline-unit", "measure"])
+
+        cli_module.main()
+
+        assert captured.get("timeline_unit") == "measure"
+
+    def test_slice_range_bar_is_end_exclusive(self, tmp_path, monkeypatch):
+        """Bar slicing should be start-inclusive, end-exclusive."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Violin())
+
+        for i in range(1, 5):
+            m = stream.Measure(number=i)
+            n = note.Note("C4")
+            n.quarterLength = 1.0
+            m.append(n)
+            part.append(m)
+        score.append(part)
+
+        captured = {}
+
+        def fake_create_visualization(*args, **kwargs):
+            captured["called"] = True
+            captured["note_events"] = args[0] if args else kwargs.get("note_events")
+            captured.update(kwargs)
+            return None
+
+        monkeypatch.setattr(cli_module, "convert_musicxml_to_png", convert_musicxml_to_png)
+        monkeypatch.setattr("musicxml_to_png.converter.create_visualization", fake_create_visualization)
+
+        input_path = tmp_path / "in.mxl"
+        score.write("musicxml", input_path)
+        output_path = tmp_path / "out.png"
+        convert_musicxml_to_png(
+            input_path=input_path,
+            score=score,
+            output_path=output_path,
+            slice_mode="bar",
+            slice_start=2,
+            slice_end=4,
+            timeline_unit="bar",
+        )
+
+        measure_ticks = captured.get("measure_ticks")
+        assert measure_ticks == [(2, 0.0), (3, 1.0)]
+
+    def test_slice_range_beat_is_one_indexed_input(self, tmp_path, monkeypatch):
+        """Beat slicing should treat inputs as 1-based and end-exclusive."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Flute())
+
+        for i, pitch_name in enumerate(["C4", "D4", "E4"], start=0):
+            n = note.Note(pitch_name)
+            n.quarterLength = 1.0
+            part.insert(float(i), n)
+        score.append(part)
+
+        input_path = tmp_path / "in.mxl"
+        score.write("musicxml", input_path)
+        output_path = tmp_path / "out.png"
+
+        captured = {}
+
+        def fake_create_visualization(*args, **kwargs):
+            captured["called"] = True
+            captured["note_events"] = args[0] if args else kwargs.get("note_events")
+            captured.update(kwargs)
+            return None
+
+        monkeypatch.setattr("musicxml_to_png.converter.create_visualization", fake_create_visualization)
+
+        convert_musicxml_to_png(
+            input_path=input_path,
+            score=score,
+            output_path=output_path,
+            slice_mode="beat",
+            slice_start=2,
+            slice_end=3,
+            timeline_unit="beat",
+        )
+
+        note_events = captured.get("note_events")
+        assert captured.get("called") is True
+        assert note_events is not None
+        # Should include only the second note (beat 2), rebased to start at 0
+        assert len(note_events) == 1
+        assert note_events[0].pitch_midi == 62.0  # D4
+        assert note_events[0].start_time == 0.0
+        assert note_events[0].duration == 1.0
+
 
     def test_disable_title(self, tmp_path):
         """Conversion should succeed with title disabled."""

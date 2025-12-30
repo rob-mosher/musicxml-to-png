@@ -11,7 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Default overlap splitting for stacked same-pitch notes so only the truly simultaneous segments use thicker bars.
 - CLI flag `--no-overlap-splitting` (and library argument `split_overlaps`) to opt into legacy whole-note stacking; default remains splitting so only truly overlapping segments are thickened.
-- Support for staccato articulations by shortening durations (default 65%) with configurable `--staccato-factor` (clamped 0.1–0.9).
+- Support for staccato articulations by shortening durations (default 40%) with configurable `--staccato-factor` (clamped 0.1–0.9).
+- Timeline unit selection for the x-axis (`--timeline-unit {beat,bar,measure}`) to show bar numbers (default) or beats.
+- Timeline slicing by bars/measures or beats via `--slice-range start-end` (unit from `--timeline-unit {bar,measure,beat}`) to render focused sections of a score.
+  - Slices are 1-indexed and end-exclusive for both bars and beats. (i.e. `1-3` would generate two "units")
+
+### Changed
+
+- Timeline labels are now 1-indexed instead of 0-indexed
 
 ## [0.4.0] - 2025-12-29
 

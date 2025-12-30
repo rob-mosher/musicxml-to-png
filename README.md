@@ -46,6 +46,9 @@ Convert MusicXML files into clean, analyzable PNG visualizations showing tempora
   - Custom titles (`-t "Custom Title"`)
   - Width controls: `--time-stretch` or `--fig-width`
   - Staccato shortening (default 40%); override with `--staccato-factor` (0.1–0.9)
+  - Timeline slicing by bars/measures or beats using `--slice-range start-end` (unit from `--timeline-unit`, default bar/measure)
+    - Slice ranges are 1-based and end-exclusive (e.g., `2-4` yields bars 2–3; `2-3` beats yields only beat 2)
+  - Timeline units for x-axis: bars/measures (default) or beats (`--timeline-unit measure` or `--timeline-unit beat`), labels are 1-indexed
   - Output DPI control: `--dpi` (default 150)
   - No-output mode for smoke tests: `--no-output`
   - Verbose mode for debugging (`-v`/`--verbose`)
