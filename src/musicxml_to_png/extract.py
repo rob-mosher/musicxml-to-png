@@ -645,11 +645,12 @@ def detect_note_connections(note_events: List[NoteEvent]) -> List[Tuple[int, int
                     if note2_start > note1_end + CONNECTION_TIME_EPS:
                         break
                     
-                    # Only connect notes on different pitches
-                    # Notes on the same pitch that are adjacent are likely overlapping segments
-                    # from split_overlaps, not sequential notes
+                    # Allow same-pitch connections only for visibly separated, shortened notes
                     if note1.pitch_midi == note2.pitch_midi:
-                        continue
+                        visible_gap = (note2.start_time - (note1.start_time + note1.duration))
+                        shortened = (note1.duration + CONNECTION_TIME_EPS) < note1.original_duration
+                        if not (shortened and visible_gap > CONNECTION_TIME_EPS):
+                            continue
                     
                     # Check if notes are adjacent (no rest between)
                     # Use small epsilon for floating point comparison

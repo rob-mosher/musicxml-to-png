@@ -1512,6 +1512,43 @@ class TestNoteConnections:
         assert (60.0, 62.0) in connected_pairs  # voice 1
         assert (52.0, 53.0) in connected_pairs  # voice 2
 
+    def test_connections_link_staccato_repeats_same_pitch(self):
+        """Shortened staccato notes on the same pitch should connect when adjacent."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Violin())
+
+        for offset in (0.0, 1.0, 2.0):
+            n = note.Note("C5")
+            n.quarterLength = 1.0
+            n.articulations = [articulations.Staccato()]
+            part.insert(offset, n)
+
+        score.append(part)
+
+        note_events = extract_notes(score, ensemble=ENSEMBLE_ORCHESTRA)
+        connections = detect_note_connections(note_events)
+
+        connected_pairs = {(note_events[i].pitch_midi, note_events[j].pitch_midi) for i, j in connections}
+        assert (72.0, 72.0) in connected_pairs  # C5 -> C5 staccato repeats
+
+    def test_connections_do_not_link_full_length_same_pitch_repeats(self):
+        """Non-staccato same-pitch repeats should not connect automatically."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Violin())
+
+        part.insert(0.0, note.Note("C5", quarterLength=1.0))
+        part.insert(1.0, note.Note("C5", quarterLength=1.0))
+
+        score.append(part)
+
+        note_events = extract_notes(score, ensemble=ENSEMBLE_ORCHESTRA)
+        connections = detect_note_connections(note_events)
+
+        connected_pairs = {(note_events[i].pitch_midi, note_events[j].pitch_midi) for i, j in connections}
+        assert (72.0, 72.0) not in connected_pairs
+
     def test_connection_config_passes_through_converter(self, tmp_path, monkeypatch):
         """Connection styling overrides should reach visualization config."""
         score = stream.Score()

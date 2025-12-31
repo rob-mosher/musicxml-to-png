@@ -358,6 +358,11 @@ def _draw_note_connections(
         x2 = note2.start_time
         y2 = note2.pitch_midi
 
+        # Same-pitch staccato repeats should stay straight even if curves are enabled
+        same_pitch = note1.pitch_midi == note2.pitch_midi
+        is_shortened = (note1.duration + 1e-9) < note1.original_duration
+        force_straight = same_pitch and is_shortened
+
         gap = x2 - x1
         if connection_config.max_gap is not None and gap > connection_config.max_gap:
             continue
@@ -374,9 +379,20 @@ def _draw_note_connections(
             min_alpha=connection_config.min_alpha,
         )
 
-        if connection_config.curve_height_factor > 0 and gap >= 0:
-            cx = (x1 + x2) / 2.0
-            cy = (y1 + y2) / 2.0 + connection_config.curve_height_factor * gap
+        # Scale curve height by pitch distance; zero when pitches match
+        pitch_delta = abs(y2 - y1)
+        pitch_scale = 0.0 if same_pitch else max(0.5, min(2.0, pitch_delta / 12.0))
+        effective_curve = connection_config.curve_height_factor * pitch_scale
+
+        # Give vertical/near-vertical links a small span so curvature is visible
+        min_curve_span = 0.05
+        span = max(gap, min_curve_span)
+
+        use_curve = effective_curve > 0 and gap >= 0 and not force_straight
+
+        if use_curve:
+            cx = x1 + span / 2.0 if x2 >= x1 else (x1 + x2) / 2.0
+            cy = (y1 + y2) / 2.0 + effective_curve * span
             path_data = [
                 (MplPath.MOVETO, (x1, y1)),
                 (MplPath.CURVE3, (cx, cy)),
