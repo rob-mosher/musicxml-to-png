@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Changed default connection linewidth from 2.5 to 1.5 for finer connection lines.
+
 ## Fixed
 
 - Connection detection now respects distinct voices within a shared part and keeps separate lanes for unvoiced notes when mixed with voiced material; connections no longer misroute when multiple voices share one staff.

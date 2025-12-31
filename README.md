@@ -57,7 +57,7 @@ musicxml-to-png your-score.mxl --ensemble bigband --minimal -o output.png
 - Same-pitch stacking is split by default so only overlapping segments thicken; opt out with `--no-overlap-splitting` for the legacy whole-note look
 - No-output mode for smoke tests: `--no-output`
 - Verbose mode for debugging (`-v`/`--verbose`)
-- Connection styling: tune connection visuals with `--connection-max-gap`, `--connection-fade-start`, `--connection-fade-end`, `--connection-linewidth`, `--connection-curve-height-factor` (advanced; requires `--show-connections`; defaults: linewidth=2.5, curve_height_factor=2.0)
+- Connection styling: tune connection visuals with `--connection-max-gap`, `--connection-fade-start`, `--connection-fade-end`, `--connection-linewidth`, `--connection-curve-height-factor` (advanced; requires `--show-connections`; defaults: linewidth=1.5, curve_height_factor=2.0)
 
 ## Usage
 

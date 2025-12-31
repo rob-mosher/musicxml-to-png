@@ -265,7 +265,7 @@ Examples:
         "--connection-linewidth",
         type=float,
         default=None,
-        help="Line width for connection lines (default 2.5, advanced).",
+        help="Line width for connection lines (default 1.5, advanced).",
     )
     parser.add_argument(
         "--connection-curve-height-factor",
