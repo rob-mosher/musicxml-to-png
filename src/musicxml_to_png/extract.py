@@ -305,6 +305,7 @@ def extract_notes(
         midi_program = None
         instrument_name = None
         instrument_label = None
+        part_transposition = None
 
         for element in part.recurse().getElementsByClass(instrument.Instrument):
             part_instrument = element
@@ -312,6 +313,8 @@ def extract_notes(
                 midi_program = element.midiProgram
             if hasattr(element, "instrumentName") and element.instrumentName:
                 instrument_name = str(element.instrumentName)
+            if getattr(element, "transposition", None) is not None:
+                part_transposition = element.transposition
             break
 
         if part_instrument is None and part.partName:
@@ -336,19 +339,31 @@ def extract_notes(
 
         note_data = []
 
+        def _sounding_midi(pitch_obj):
+            if pitch_obj.midi is None:
+                return None
+            if part_transposition is None:
+                return float(pitch_obj.midi)
+            try:
+                transposed = pitch_obj.transpose(part_transposition)
+                return float(transposed.midi) if transposed.midi is not None else None
+            except Exception:
+                return float(pitch_obj.midi)
+
         for element in part.recurse().notes:
             absolute_offset = _absolute_offset_from_measure(element, score, measure_offsets)
 
             if isinstance(element, note.Note):
                 pitch_obj = element.pitch
-                if pitch_obj.midi is not None:
+                midi_val = _sounding_midi(pitch_obj)
+                if midi_val is not None:
                     original_duration = float(element.quarterLength)
                     is_staccato = any(isinstance(art, articulations.Staccato) for art in element.articulations)
                     effective_duration = original_duration * (staccato_factor if is_staccato else 1.0)
                     tie_type = element.tie.type if element.tie is not None else None
                     note_data.append(
                         (
-                            float(pitch_obj.midi),
+                            midi_val,
                             absolute_offset,
                             effective_duration,
                             original_duration,
@@ -358,14 +373,15 @@ def extract_notes(
                     )
             elif isinstance(element, chord.Chord):
                 for pitch_obj in element.pitches:
-                    if pitch_obj.midi is not None:
+                    midi_val = _sounding_midi(pitch_obj)
+                    if midi_val is not None:
                         original_duration = float(element.quarterLength)
                         is_staccato = any(isinstance(art, articulations.Staccato) for art in element.articulations)
                         effective_duration = original_duration * (staccato_factor if is_staccato else 1.0)
                         tie_type = element.tie.type if element.tie is not None else None
                         note_data.append(
                             (
-                                float(pitch_obj.midi),
+                                midi_val,
                                 absolute_offset,
                                 effective_duration,
                                 original_duration,

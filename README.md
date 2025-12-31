@@ -37,6 +37,7 @@ musicxml-to-png your-score.mxl --ensemble bigband --minimal -o output.png
   - Bigband: trumpets, trombones, saxophones, rhythm section
   - (More ensemble types coming - jazzcombo, chamber, etc.)
 - Color-coded instruments or families (per-instrument by default, ensemble palettes when requested)
+- Automatically normalize transposing instruments to concert pitch for consistent visualization
 - Export as high-resolution PNG (default 150 DPI)
 
 **Common Customization:**

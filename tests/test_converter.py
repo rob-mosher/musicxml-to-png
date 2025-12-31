@@ -411,7 +411,7 @@ class TestExtractNotes:
         score.insert(0, part1)
 
         part2 = stream.Part()
-        part2.append(instrument.Clarinet())
+        part2.append(instrument.Oboe())  # non-transposing to keep concert pitch overlap
         n2 = note.Note("C4")
         n2.quarterLength = 1.0
         part2.append(n2)
@@ -424,12 +424,12 @@ class TestExtractNotes:
         for event in note_events:
             events_by_label.setdefault(event.instrument_label, []).append(event)
 
-        assert set(events_by_label) == {"Flute", "Clarinet"}
+        assert set(events_by_label) == {"Flute", "Oboe"}
 
-        clarinet_event = events_by_label["Clarinet"][0]
-        assert clarinet_event.start_time == 0.0
-        assert clarinet_event.duration == 1.0
-        assert clarinet_event.pitch_overlap == 2
+        oboe_event = events_by_label["Oboe"][0]
+        assert oboe_event.start_time == 0.0
+        assert oboe_event.duration == 1.0
+        assert oboe_event.pitch_overlap == 2
 
         flute_events = sorted(events_by_label["Flute"], key=lambda e: e.start_time)
         assert len(flute_events) == 2
@@ -452,7 +452,7 @@ class TestExtractNotes:
         score.insert(0, part1)
 
         part2 = stream.Part()
-        part2.append(instrument.Clarinet())
+        part2.append(instrument.Oboe())  # non-transposing to keep concert pitch overlap
         n2 = note.Note("C4")
         n2.quarterLength = 1.0
         part2.append(n2)
@@ -465,12 +465,12 @@ class TestExtractNotes:
         for event in note_events:
             events_by_label.setdefault(event.instrument_label, []).append(event)
 
-        assert set(events_by_label) == {"Flute", "Clarinet"}
+        assert set(events_by_label) == {"Flute", "Oboe"}
 
-        clarinet_event = events_by_label["Clarinet"][0]
-        assert clarinet_event.start_time == 0.0
-        assert clarinet_event.duration == 1.0
-        assert clarinet_event.pitch_overlap == 2
+        oboe_event = events_by_label["Oboe"][0]
+        assert oboe_event.start_time == 0.0
+        assert oboe_event.duration == 1.0
+        assert oboe_event.pitch_overlap == 2
 
         flute_event = events_by_label["Flute"][0]
         assert flute_event.start_time == 0.0
@@ -1382,6 +1382,21 @@ class TestNoteConnections:
 
         connections = detect_note_connections(note_events)
         assert connections == [(0, 2)]
+
+    def test_transposing_instrument_writes_concert_pitch(self):
+        """Written pitches for transposing instruments should be converted to concert pitch."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.fromString("Bb Clarinet"))
+        n = note.Note("C4")
+        n.quarterLength = 1.0
+        part.append(n)
+        score.append(part)
+
+        note_events = extract_notes(score, ensemble=ENSEMBLE_ORCHESTRA)
+        assert len(note_events) == 1
+        # Written C4 for Bb clarinet should sound Bb3 (M-2 transpose)
+        assert note_events[0].pitch_midi == pytest.approx(58.0)
 
     def test_connection_visualization(self, tmp_path):
         """Test that connections are rendered when show_connections=True."""
