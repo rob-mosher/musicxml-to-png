@@ -267,12 +267,6 @@ Examples:
         default=None,
         help="Line width for connection lines (default 1.5, advanced).",
     )
-    parser.add_argument(
-        "--connection-curve-height-factor",
-        type=float,
-        default=None,
-        help="Curve height factor for connection lines; 0 = straight, higher bends upward (default 2.0, advanced).",
-    )
     
     args = parser.parse_args()
     
@@ -374,7 +368,6 @@ Examples:
             connection_fade_start=args.connection_fade_start,
             connection_fade_end=args.connection_fade_end,
             connection_linewidth=args.connection_linewidth,
-            connection_curve_height_factor=args.connection_curve_height_factor,
         )
         if not args.no_output:
             print(f"Successfully created visualization: {result_path}")

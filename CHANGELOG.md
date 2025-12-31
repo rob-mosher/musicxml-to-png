@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Changed default connection linewidth from 2.5 to 1.5 for finer connection lines.
-- Changed connection curves to being dynamically determined
+- Changed connection curves to be dynamically determined; removed the CLI curve-height flag (library override remains in `ConnectionConfig`).
 
 ## Fixed
 
@@ -51,7 +51,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added coverage for connection alpha fading behavior.
 - Exposed connection styling controls via CLI flags (`--connection-*`) and library params (max-gap, alpha, fade, linewidth).
 - Added CLI and converter regression tests to ensure connection styling flags propagate end-to-end.
-- Added optional connection curvature (`--connection-curve-height-factor`) with tests and README docs.
 
 ## [0.5.0] - 2025-12-29
 

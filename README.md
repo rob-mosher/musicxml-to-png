@@ -57,7 +57,7 @@ musicxml-to-png your-score.mxl --ensemble bigband --minimal -o output.png
 - Same-pitch stacking is split by default so only overlapping segments thicken; opt out with `--no-overlap-splitting` for the legacy whole-note look
 - No-output mode for smoke tests: `--no-output`
 - Verbose mode for debugging (`-v`/`--verbose`)
-- Connection styling: tune connection visuals with `--connection-max-gap`, `--connection-fade-start`, `--connection-fade-end`, `--connection-linewidth`, `--connection-curve-height-factor` (advanced; requires `--show-connections`; defaults: linewidth=1.5, curve_height_factor=2.0)
+- Connection styling: tune connection visuals with `--connection-max-gap`, `--connection-fade-start`, `--connection-fade-end`, `--connection-linewidth` (advanced; requires `--show-connections`; default linewidth=1.5; curve height auto-scales)
 
 ## Usage
 
@@ -132,8 +132,7 @@ musicxml-to-png input.mxl --show-connections \
   --connection-max-gap 8.0 \
   --connection-fade-start 4.0 \
   --connection-fade-end 8.0 \
-  --connection-linewidth 1.2 \
-  --connection-curve-height-factor 3.0
+  --connection-linewidth 1.2
 
 # Smoke tests / CI
 musicxml-to-png input.mxl --no-output          # Run full pipeline without writing PNG
@@ -193,8 +192,7 @@ output_path = convert_musicxml_to_png(
     connection_max_gap=8.0,      # Skip very long connection spans (beats)
     connection_fade_start=4.0,   # Start fading after this many beats of span
     connection_fade_end=8.0,     # Fully faded by this span length
-    connection_linewidth=1.2,    # Line width for connections
-    connection_curve_height_factor=3.0  # Bend connection lines upward (0 = straight)
+    connection_linewidth=1.2    # Line width for connections
 )
 ```
 
