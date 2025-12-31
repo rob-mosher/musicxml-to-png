@@ -11,6 +11,7 @@ This document outlines planned features and improvements for musicxml-to-png.
   - curved/straight toggle in CLI and library presets
   - SVG export option for vector-friendly connections/lines
   - connection trimming/z-order so lines sit behind notebars without losing continuity
+  - reassess connection max-gap/fade usefulness after more musical cases; keep beta flag until then
 
 ## Long-term vision
 
