@@ -624,8 +624,8 @@ def _build_legend(
 def _apply_grid(ax, show_grid: bool) -> None:
     if not show_grid:
         return
-    ax.grid(True, which="major", alpha=0.4, linestyle="-", linewidth=0.8, color="gray")
-    ax.grid(True, which="minor", alpha=0.2, linestyle="--", linewidth=0.3, color="lightgray")
+    ax.grid(True, which="major", alpha=0.15, linestyle="-", linewidth=0.8, color="black")
+    ax.grid(True, which="minor", alpha=0.4, linestyle="--", linewidth=0.3, color="black")
     ax.set_axisbelow(True)
 
 

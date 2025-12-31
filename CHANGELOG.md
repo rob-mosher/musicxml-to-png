@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Changed default connection linewidth from 2.5 to 1.5 for finer connection lines.
 - Changed connection curves to be dynamically determined; removed the CLI curve-height flag (library override remains in `ConnectionConfig`).
+- Changed pitch/note grid to be less visible, rehearsal mark lines to be more visible.
 
 ## Fixed
 
