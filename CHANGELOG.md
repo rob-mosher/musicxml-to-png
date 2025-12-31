@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Fixed
+
+- Connection detection now respects distinct voices within a shared part and inferred voice lanes; connections no longer misroute when multiple voices share one staff.
+
 ## [0.6.1] - 2025-12-30
 
 ## Changed

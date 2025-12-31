@@ -1440,6 +1440,38 @@ class TestNoteConnections:
 
         assert output_path.exists()
 
+    def test_connections_respect_voices_within_same_part(self):
+        """Connections should follow voices when multiple voices share one part."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Oboe())
+
+        voice1 = stream.Voice()
+        v1_n1 = note.Note("C4")
+        v1_n1.quarterLength = 1.0
+        v1_n2 = note.Note("D4")
+        v1_n2.quarterLength = 1.0
+        voice1.append([v1_n1, v1_n2])
+
+        voice2 = stream.Voice()
+        v2_n1 = note.Note("G3")
+        v2_n1.quarterLength = 1.0
+        v2_n2 = note.Note("A3")
+        v2_n2.quarterLength = 1.0
+        voice2.append([v2_n1, v2_n2])
+
+        part.append(voice1)
+        part.append(voice2)
+        score.append(part)
+
+        note_events = extract_notes(score, ensemble=ENSEMBLE_ORCHESTRA)
+        connections = detect_note_connections(note_events)
+
+        # Expect one connection per voice: v1_n1->v1_n2 and v2_n1->v2_n2
+        connected_pairs = {(note_events[i].pitch_midi, note_events[j].pitch_midi) for i, j in connections}
+        assert (60.0, 62.0) in connected_pairs  # C4 -> D4 (voice 1)
+        assert (55.0, 57.0) in connected_pairs  # G3 -> A3 (voice 2)
+
     def test_connection_config_passes_through_converter(self, tmp_path, monkeypatch):
         """Connection styling overrides should reach visualization config."""
         score = stream.Score()
