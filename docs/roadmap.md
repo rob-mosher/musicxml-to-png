@@ -10,6 +10,7 @@ This document outlines planned features and improvements for musicxml-to-png.
   - presets for curvature/alpha/max-gap and a sensible default max-gap
   - curved/straight toggle in CLI and library presets
   - SVG export option for vector-friendly connections/lines
+  - connection trimming/z-order so lines sit behind notebars without losing continuity
 
 ## Long-term vision
 

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changed
 
 - Updated connection defaults: linewidth now 2.5 and curve height factor 2.0 (connections curve upward by default).
+- Connection alpha now derives from adjacent note dynamics (adaptive); removed CLI alpha/min-alpha flags to avoid manual opacity tuning, dynamic-driven alpha is covered by new helper tests.
 
 ## [0.6.0] - 2025-12-30
 

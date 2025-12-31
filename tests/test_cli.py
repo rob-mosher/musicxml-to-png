@@ -142,10 +142,6 @@ class TestCLIArguments:
             "--show-connections",
             "--connection-max-gap",
             "2.5",
-            "--connection-alpha",
-            "0.5",
-            "--connection-min-alpha",
-            "0.2",
             "--connection-fade-start",
             "3",
             "--connection-fade-end",
@@ -160,8 +156,6 @@ class TestCLIArguments:
 
         assert captured.get("show_connections") is True
         assert captured.get("connection_max_gap") == 2.5
-        assert captured.get("connection_alpha") == 0.5
-        assert captured.get("connection_min_alpha") == 0.2
         assert captured.get("connection_fade_start") == 3
         assert captured.get("connection_fade_end") == 6
         assert captured.get("connection_linewidth") == 1.5

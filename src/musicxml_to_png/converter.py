@@ -132,8 +132,6 @@ def convert_musicxml_to_png(
     transparent: bool = False,
     show_connections: bool = False,
     connection_max_gap: Optional[float] = None,
-    connection_alpha: Optional[float] = None,
-    connection_min_alpha: Optional[float] = None,
     connection_fade_start: Optional[float] = None,
     connection_fade_end: Optional[float] = None,
     connection_linewidth: Optional[float] = None,
@@ -219,8 +217,6 @@ def convert_musicxml_to_png(
         show_connections=show_connections,
     )
     connection_config = viz_config.connections.with_overrides(
-        alpha=connection_alpha,
-        min_alpha=connection_min_alpha,
         fade_start=connection_fade_start,
         fade_end=connection_fade_end,
         max_gap=connection_max_gap,

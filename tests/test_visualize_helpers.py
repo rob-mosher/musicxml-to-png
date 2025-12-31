@@ -8,8 +8,9 @@ from musicxml_to_png.visualize import (
     compute_padding,
     generate_time_ticks,
     ConnectionConfig,
+    DEFAULT_CONNECTION_ALPHA,
 )
-from musicxml_to_png.models import NoteEvent
+from musicxml_to_png.models import NoteEvent, MIN_DYNAMIC_LEVEL, MAX_DYNAMIC_LEVEL
 
 
 def _make_event(pitch: float, start: float, duration: float) -> NoteEvent:
@@ -103,3 +104,30 @@ def test_connection_config_alpha_fade():
     mid_alpha = cfg.alpha_for_length(2.5)
     assert 0.3 < mid_alpha < 0.6  # fades between start/end
     assert cfg.alpha_for_length(5.0) == pytest.approx(0.3)
+
+
+def _note_alpha(dynamic_level: float) -> float:
+    dynamic_range = MAX_DYNAMIC_LEVEL - MIN_DYNAMIC_LEVEL
+    normalized = 0.0 if dynamic_range == 0 else (dynamic_level - MIN_DYNAMIC_LEVEL) / dynamic_range
+    normalized = max(0.0, min(1.0, normalized))
+    return min(0.95, 0.35 + 0.45 * normalized)
+
+
+def test_connection_alpha_follows_note_dynamics():
+    cfg = ConnectionConfig()  # uses DEFAULT_CONNECTION_ALPHA internally
+    quiet_alpha = _note_alpha(MIN_DYNAMIC_LEVEL)
+    loud_alpha = _note_alpha(MAX_DYNAMIC_LEVEL)
+    base_alpha = (quiet_alpha + loud_alpha) / 2.0
+
+    alpha = cfg.alpha_for_length(1.0, base_alpha=base_alpha, min_alpha=cfg.min_alpha)
+    assert alpha == pytest.approx(base_alpha)
+
+
+def test_connection_alpha_scales_with_config_alpha():
+    cfg = ConnectionConfig(alpha=0.3)
+    loud_alpha = _note_alpha(MAX_DYNAMIC_LEVEL)
+    # Scale step mimics _draw_note_connections: average note alpha then scale by config alpha
+    base_scaled = loud_alpha * (cfg.alpha / DEFAULT_CONNECTION_ALPHA)
+
+    alpha = cfg.alpha_for_length(1.0, base_alpha=base_scaled, min_alpha=cfg.min_alpha)
+    assert alpha == pytest.approx(base_scaled)

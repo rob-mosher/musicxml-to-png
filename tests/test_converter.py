@@ -1452,8 +1452,6 @@ class TestNoteConnections:
             output_path=tmp_path / "out.png",
             show_connections=True,
             connection_max_gap=1.5,
-            connection_alpha=0.4,
-            connection_min_alpha=0.2,
             connection_fade_start=2.0,
             connection_fade_end=4.0,
             connection_linewidth=1.3,
@@ -1464,8 +1462,6 @@ class TestNoteConnections:
         assert cfg is not None
         conn_cfg = cfg.connections
         assert conn_cfg.max_gap == 1.5
-        assert conn_cfg.alpha == 0.4
-        assert conn_cfg.min_alpha == 0.2
         assert conn_cfg.fade_start == 2.0
         assert conn_cfg.fade_end == 4.0
         assert conn_cfg.linewidth == 1.3

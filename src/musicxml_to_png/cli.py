@@ -250,18 +250,6 @@ Examples:
         help="Skip drawing connection lines when the gap from note end to next start exceeds this many beats (advanced).",
     )
     parser.add_argument(
-        "--connection-alpha",
-        type=float,
-        default=None,
-        help="Base opacity for short connection lines (default 0.6, advanced).",
-    )
-    parser.add_argument(
-        "--connection-min-alpha",
-        type=float,
-        default=None,
-        help="Minimum opacity for long connection lines after fading (default 0.25, advanced).",
-    )
-    parser.add_argument(
         "--connection-fade-start",
         type=float,
         default=None,
@@ -383,8 +371,6 @@ Examples:
             transparent=args.transparent,
             show_connections=args.show_connections,
             connection_max_gap=args.connection_max_gap,
-            connection_alpha=args.connection_alpha,
-            connection_min_alpha=args.connection_min_alpha,
             connection_fade_start=args.connection_fade_start,
             connection_fade_end=args.connection_fade_end,
             connection_linewidth=args.connection_linewidth,

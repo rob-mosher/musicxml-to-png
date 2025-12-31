@@ -43,6 +43,7 @@ MAX_FIG_HEIGHT = 16.0
 BASE_FIG_HEIGHT = MIN_FIG_HEIGHT
 PITCH_TO_HEIGHT_SLOPE = 0.15
 STRETCH_MAX_MULTIPLIER = 10.0
+DEFAULT_CONNECTION_ALPHA = 0.6
 
 
 @dataclass(frozen=True)
@@ -81,15 +82,22 @@ class ConnectionConfig:
     linewidth: float = 2.5
     curve_height_factor: float = 2.0  # 0 = straight line; positive values bend upward
 
-    def alpha_for_length(self, length: float) -> float:
+    def alpha_for_length(
+        self,
+        length: float,
+        base_alpha: Optional[float] = None,
+        min_alpha: Optional[float] = None,
+    ) -> float:
+        base = self.alpha if base_alpha is None else base_alpha
+        min_a = self.min_alpha if min_alpha is None else min_alpha
         if self.fade_end <= self.fade_start:
-            return max(0.0, min(1.0, self.alpha))
+            return max(0.0, min(1.0, base))
         if length <= self.fade_start:
-            return max(0.0, min(1.0, self.alpha))
+            return max(0.0, min(1.0, base))
         fade_range = self.fade_end - self.fade_start
         t = min(1.0, max(0.0, (length - self.fade_start) / fade_range))
-        faded = self.alpha * (1.0 - t)
-        return max(self.min_alpha, min(1.0, faded))
+        faded = base * (1.0 - t)
+        return max(min_a, min(1.0, faded))
 
     def with_overrides(
         self,
@@ -294,6 +302,11 @@ def _draw_note_bars(
     base_bar_height: float,
     dynamic_range: float,
 ) -> None:
+    def _note_alpha(dynamic_level: float) -> float:
+        normalized_dynamic = 0.0 if dynamic_range == 0 else (dynamic_level - MIN_DYNAMIC_LEVEL) / dynamic_range
+        normalized_dynamic = max(0.0, min(1.0, normalized_dynamic))
+        return min(0.95, 0.35 + 0.45 * normalized_dynamic)
+
     for event in note_events:
         color = _color_for_event(event, color_context, family_mode, ensemble)
 
@@ -301,9 +314,7 @@ def _draw_note_bars(
         overlap_scale = min(overlap_scale, 3.0)
         bar_height = base_bar_height * overlap_scale
 
-        normalized_dynamic = 0.0 if dynamic_range == 0 else (event.dynamic_level - MIN_DYNAMIC_LEVEL) / dynamic_range
-        normalized_dynamic = max(0.0, min(1.0, normalized_dynamic))
-        alpha = min(0.95, 0.35 + 0.45 * normalized_dynamic)
+        alpha = _note_alpha(event.dynamic_level)
 
         ax.barh(
             event.pitch_midi,
@@ -325,9 +336,15 @@ def _draw_note_connections(
     family_mode: bool,
     ensemble: str,
     connection_config: ConnectionConfig,
+    dynamic_range: float,
 ) -> None:
     if not connections:
         return
+
+    def _note_alpha(dynamic_level: float) -> float:
+        normalized_dynamic = 0.0 if dynamic_range == 0 else (dynamic_level - MIN_DYNAMIC_LEVEL) / dynamic_range
+        normalized_dynamic = max(0.0, min(1.0, normalized_dynamic))
+        return min(0.95, 0.35 + 0.45 * normalized_dynamic)
 
     for note1_idx, note2_idx in connections:
         if note1_idx >= len(note_events) or note2_idx >= len(note_events):
@@ -346,7 +363,16 @@ def _draw_note_connections(
             continue
 
         connection_color = _color_for_event(note1, color_context, family_mode, ensemble)
-        alpha = connection_config.alpha_for_length(gap if gap >= 0 else 0.0)
+
+        # Base alpha derived from surrounding note dynamics, scaled by configured alpha
+        note_alpha_avg = (_note_alpha(note1.dynamic_level) + _note_alpha(note2.dynamic_level)) / 2.0
+        scale = connection_config.alpha / DEFAULT_CONNECTION_ALPHA if DEFAULT_CONNECTION_ALPHA > 0 else 1.0
+        base_alpha = max(0.0, min(1.0, note_alpha_avg * scale))
+        alpha = connection_config.alpha_for_length(
+            gap if gap >= 0 else 0.0,
+            base_alpha=base_alpha,
+            min_alpha=connection_config.min_alpha,
+        )
 
         if connection_config.curve_height_factor > 0 and gap >= 0:
             cx = (x1 + x2) / 2.0
@@ -687,6 +713,7 @@ def create_visualization(
             family_mode,
             resolved_config.ensemble,
             resolved_connection_config,
+            dynamic_range,
         )
 
     _apply_axis_labels(ctx.ax, resolved_config.timeline_unit, resolved_config.minimal)
