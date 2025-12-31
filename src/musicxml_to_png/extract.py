@@ -546,12 +546,45 @@ def detect_note_connections(note_events: List[NoteEvent]) -> List[Tuple[int, int
         # Sort by start_time, then by pitch for consistent ordering
         instrument_notes.sort(key=lambda item: (item[1].start_time, item[1].pitch_midi))
 
-        # If voice IDs are present, split by them; otherwise, infer simple lanes by scheduling
+        # If voice IDs are present, split by them; otherwise, infer simple lanes by scheduling.
+        # When some notes lack voice IDs even though others have them, infer lanes within the
+        # untagged subset so distinct voices sharing a part don't collapse into one lane.
         groups: Dict[Optional[str], List[Tuple[int, NoteEvent]]] = {}
         has_voice_ids = any(ev.voice_id is not None for _, ev in instrument_notes)
         if has_voice_ids:
+            no_voice: List[Tuple[int, NoteEvent]] = []
             for idx, ev in instrument_notes:
-                groups.setdefault(ev.voice_id, []).append((idx, ev))
+                if ev.voice_id is None:
+                    no_voice.append((idx, ev))
+                else:
+                    groups.setdefault(ev.voice_id, []).append((idx, ev))
+
+            if no_voice:
+                lane_meta: List[Tuple[float, float, float]] = []  # (end_time, last_pitch, last_original_end)
+                lane_notes: List[List[Tuple[int, NoteEvent]]] = []
+                for idx, ev in no_voice:
+                    assigned = False
+                    for lane_idx, (end_time, last_pitch, last_orig_end) in enumerate(lane_meta):
+                        same_underlying = (
+                            ev.pitch_midi == last_pitch
+                            and abs((ev.start_time + ev.original_duration) - last_orig_end) < CONNECTION_TIME_EPS
+                        )
+                        if end_time <= ev.start_time + CONNECTION_TIME_EPS or same_underlying:
+                            lane_meta[lane_idx] = (
+                                ev.start_time + ev.original_duration,
+                                ev.pitch_midi,
+                                ev.start_time + ev.original_duration,
+                            )
+                            lane_notes[lane_idx].append((idx, ev))
+                            assigned = True
+                            break
+                    if not assigned:
+                        lane_meta.append(
+                            (ev.start_time + ev.original_duration, ev.pitch_midi, ev.start_time + ev.original_duration)
+                        )
+                        lane_notes.append([(idx, ev)])
+                for lane_idx, notes_in_lane in enumerate(lane_notes):
+                    groups[f"lane-none-{lane_idx}"] = notes_in_lane
         else:
             # Greedy interval partitioning to infer separate voices within one part
             # Keep split segments (same pitch, same original end) in the same lane
@@ -575,10 +608,11 @@ def detect_note_connections(note_events: List[NoteEvent]) -> List[Tuple[int, int
             for lane_idx, notes_in_lane in enumerate(lane_notes):
                 groups[f"lane-{lane_idx}"] = notes_in_lane
 
-        connected_target_starts: set[float] = set()
+        global_target_starts: Optional[set[float]] = set() if len(groups) <= 1 else None
 
         for instrument_notes in groups.values():
             instrument_notes.sort(key=lambda item: (item[1].start_time, item[1].pitch_midi))
+            connected_target_starts: set[float] = global_target_starts if global_target_starts is not None else set()
 
             # Deduplicate split segments from the same underlying note (same pitch, same original end)
             dedup_map: Dict[Tuple[float, float], Tuple[int, NoteEvent]] = {}

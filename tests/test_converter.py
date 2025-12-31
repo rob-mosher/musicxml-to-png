@@ -1372,7 +1372,10 @@ class TestNoteConnections:
         assert connections == [(2, 3)]
 
     def test_connection_detection_only_one_from_simultaneous_sources(self):
-        """When multiple notes start together, only one connection should lead into the next start."""
+        """
+        When multiple notes start together on the same instrument, each implicit voice
+        should connect independently (lanes inferred).
+        """
         note_events = [
             NoteEvent(pitch_midi=60.0, start_time=0.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, instrument_label="Violin", original_duration=1.0),
             NoteEvent(pitch_midi=62.0, start_time=0.0, duration=1.0, instrument_family=ORCHESTRA_STRINGS, instrument_label="Violin", original_duration=1.0),
@@ -1381,7 +1384,7 @@ class TestNoteConnections:
         ]
 
         connections = detect_note_connections(note_events)
-        assert connections == [(0, 2)]
+        assert connections == [(0, 2), (1, 3)]
 
     def test_transposing_instrument_writes_concert_pitch(self):
         """Written pitches for transposing instruments should be converted to concert pitch."""
@@ -1471,6 +1474,43 @@ class TestNoteConnections:
         connected_pairs = {(note_events[i].pitch_midi, note_events[j].pitch_midi) for i, j in connections}
         assert (60.0, 62.0) in connected_pairs  # C4 -> D4 (voice 1)
         assert (55.0, 57.0) in connected_pairs  # G3 -> A3 (voice 2)
+
+    def test_connections_infer_lanes_when_voices_present(self):
+        """Unvoiced notes should keep separate lanes even when later voice IDs appear."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Horn())
+
+        # Early overlapping lines without explicit voices
+        part.insert(0.0, note.Note("C4", quarterLength=1.0))
+        part.insert(0.0, note.Note("E4", quarterLength=1.0))
+        part.insert(1.0, note.Note("D4", quarterLength=1.0))
+        part.insert(1.0, note.Note("F4", quarterLength=1.0))
+
+        # Later, explicit voices enter
+        voice1 = stream.Voice()
+        voice1.id = "1"
+        voice1.insert(4.0, note.Note("G4", quarterLength=1.0))
+        voice1.insert(5.0, note.Note("A4", quarterLength=1.0))
+
+        voice2 = stream.Voice()
+        voice2.id = "2"
+        voice2.insert(4.0, note.Note("B3", quarterLength=1.0))
+        voice2.insert(5.0, note.Note("C4", quarterLength=1.0))
+
+        part.append(voice1)
+        part.append(voice2)
+        score.append(part)
+
+        note_events = extract_notes(score, ensemble=ENSEMBLE_ORCHESTRA)
+        connections = detect_note_connections(note_events)
+
+        connected_pairs = {(note_events[i].pitch_midi, note_events[j].pitch_midi) for i, j in connections}
+        # Four distinct lane-wise connections should remain: two early unvoiced lines, two voiced lines.
+        assert (53.0, 55.0) in connected_pairs  # (unvoiced lane A, concert)
+        assert (57.0, 58.0) in connected_pairs  # (unvoiced lane B, concert)
+        assert (60.0, 62.0) in connected_pairs  # voice 1
+        assert (52.0, 53.0) in connected_pairs  # voice 2
 
     def test_connection_config_passes_through_converter(self, tmp_path, monkeypatch):
         """Connection styling overrides should reach visualization config."""
