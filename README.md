@@ -198,6 +198,8 @@ This project emerged from human-AI collaborative exploration of musical structur
 
 **Philosophy:** This tool exists to enable human-AI collaboration, not to replace human musical intuition. The goal is to create shared visual language that helps both humans and AI systems understand musical architecture more deeply, together.
 
+**Local sandbox:** For ad-hoc MusicXML/PNG samples, use `sandbox/` (gitignored except for `.gitkeep`) to keep `git status` clean; automated fixtures live under `tests/`.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](https://raw.githubusercontent.com/rob-mosher/musicxml-to-png/v0.6.2/LICENSE) file for details.
