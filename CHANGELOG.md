@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Split the legend helper into separate width/opacity hints and moved the connection line hint above them to keep legend items narrower.
+- Titles are now hidden by default; use --show-title/--title (CLI) or show_title/title (library) to display them.
 
 ### Removed
 

@@ -118,7 +118,7 @@ def convert_musicxml_to_png(
     ensemble: str = ENSEMBLE_UNGROUPED,
     show_rehearsal_marks: bool = True,
     show_legend: bool = True,
-    show_title: bool = True,
+    show_title: bool = False,
     write_output: bool = True,
     dpi: int = 150,
     time_stretch: float = 1.0,
@@ -195,8 +195,15 @@ def convert_musicxml_to_png(
         (slice_window[1] - slice_window[0]) if slice_window is not None else canonical_score_duration
     )
 
+    user_supplied_title = title is not None
     if title is None:
         title = input_path.stem
+
+    effective_show_title = bool(show_title) or user_supplied_title
+
+    if minimal:
+        title = None
+        effective_show_title = False
 
     viz_config = VisualizationConfig(
         timeline_unit=timeline_unit,
@@ -204,7 +211,7 @@ def convert_musicxml_to_png(
         minimal=minimal,
         ensemble=ensemble,
         show_legend=show_legend,
-        show_title=show_title,
+        show_title=effective_show_title,
         write_output=write_output,
         time_stretch=time_stretch,
         fig_width=fig_width,

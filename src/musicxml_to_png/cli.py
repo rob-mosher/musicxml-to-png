@@ -126,9 +126,9 @@ Examples:
     )
 
     parser.add_argument(
-        "--no-title",
+        "--show-title",
         action="store_true",
-        help="Disable the plot title (otherwise uses filename or --title)",
+        help="Show the plot title (filename by default, or --title if provided). Titles are hidden by default.",
     )
 
     parser.add_argument(
@@ -330,6 +330,9 @@ Examples:
             slice_mode = "bar" if mode_arg == "measure" else mode_arg
             slice_start, slice_end = start, end
 
+        # Determine title visibility: hidden by default unless explicitly shown or a custom title is provided
+        show_title = args.show_title or (args.title is not None)
+
         # Perform conversion
         result_path = convert_musicxml_to_png(
             input_path=input_path,
@@ -341,7 +344,7 @@ Examples:
             ensemble=args.ensemble,
             show_rehearsal_marks=not args.no_rehearsal_marks,
             show_legend=not args.no_legend,
-            show_title=not args.no_title,
+            show_title=show_title,
             write_output=not args.no_output,
             time_stretch=args.time_stretch,
             fig_width=args.fig_width,

@@ -79,6 +79,7 @@ musicxml-to-png input.mxl -o output.png
 
 # Add custom title
 musicxml-to-png input.mxl --title "My Composition"
+# Titles are hidden by default; use --show-title or --title to display one
 
 # Ensemble types - select instrument categorization scheme
 musicxml-to-png input.mxl                              # Ungrouped (default) - every instrument gets its own color
@@ -101,7 +102,7 @@ musicxml-to-png input.mxl --transparent
 # Control visibility of specific elements
 musicxml-to-png input.mxl --no-rehearsal-marks  # Hide rehearsal marks
 musicxml-to-png input.mxl --no-legend          # Hide legend
-musicxml-to-png input.mxl --no-title           # Hide title
+musicxml-to-png input.mxl --show-title         # Show title (hidden by default, uses filename)
 
 # Output quality
 musicxml-to-png input.mxl --dpi 300            # Higher resolution (default 150)
@@ -155,6 +156,8 @@ output_path = convert_musicxml_to_png(
     title="My Composition"           # Optional
 )
 
+# Titles are hidden by default; pass show_title=True or supply a title to display one.
+
 # With common options
 output_path = convert_musicxml_to_png(
     input_path=Path("input.mxl"),
@@ -167,7 +170,7 @@ output_path = convert_musicxml_to_png(
     show_connections=True,       # Show note connections (beta)
     show_rehearsal_marks=False,  # Hide rehearsal marks
     show_legend=False,           # Hide legend
-    show_title=False,            # Hide title
+    show_title=True,             # Show title (default hidden)
     dpi=300,                     # Higher resolution
     timeline_unit="beat"         # Show beats instead of bars
 )

@@ -128,7 +128,7 @@ class VisualizationConfig:
     minimal: bool = False
     ensemble: str = ENSEMBLE_UNGROUPED
     show_legend: bool = True
-    show_title: bool = True
+    show_title: bool = False
     write_output: bool = True
     time_stretch: float = 1.0
     fig_width: Optional[float] = None

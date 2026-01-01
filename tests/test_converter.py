@@ -1236,7 +1236,32 @@ class TestConvertMusicxmlToPng:
         output_path = convert_musicxml_to_png(input_path, show_title=False)
         assert output_path.exists()
 
-    def test_custom_title(self, tmp_path):
+    def test_title_hidden_by_default(self, tmp_path, monkeypatch):
+        """Default conversion should hide the title unless enabled."""
+        score = stream.Score()
+        part = stream.Part()
+        part.append(instrument.Violin())
+        part.append(note.Note("C4", quarterLength=1.0))
+        score.append(part)
+
+        captured = {}
+
+        def fake_create_visualization(*args, **kwargs):
+            captured["config"] = kwargs.get("config")
+            return tmp_path / "dummy.png"
+
+        monkeypatch.setattr("musicxml_to_png.converter.create_visualization", fake_create_visualization)
+
+        input_path = tmp_path / "test.mxl"
+        score.write("musicxml", input_path)
+
+        convert_musicxml_to_png(input_path=input_path, score=score, write_output=False)
+
+        cfg = captured.get("config")
+        assert cfg is not None
+        assert cfg.show_title is False
+
+    def test_custom_title(self, tmp_path, monkeypatch):
         """Test conversion with custom title."""
         score = stream.Score()
         part = stream.Part()
@@ -1248,9 +1273,25 @@ class TestConvertMusicxmlToPng:
         
         input_path = tmp_path / "test.mxl"
         score.write("musicxml", input_path)
-        
-        output_path = convert_musicxml_to_png(input_path, title="My Custom Title")
+
+        captured = {}
+
+        def fake_create_visualization(*args, **kwargs):
+            captured["config"] = kwargs.get("config")
+            out_path = args[1] if len(args) > 1 else tmp_path / "dummy.png"
+            Path(out_path).touch()
+            return out_path
+
+        monkeypatch.setattr("musicxml_to_png.converter.create_visualization", fake_create_visualization)
+
+        output_path = convert_musicxml_to_png(input_path, title="My Custom Title", write_output=False)
         assert output_path.exists()
+        cfg = captured.get("config")
+        assert cfg is not None
+        assert cfg.show_title is True
+        # Custom titles should force the title to display by default
+        viz_cfg = convert_musicxml_to_png.__globals__.get("VisualizationConfig")
+        assert viz_cfg is not None
 
     def test_transparent_background_conversion(self, tmp_path):
         """Test conversion with transparent background."""

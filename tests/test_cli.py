@@ -193,17 +193,49 @@ class TestCLIArguments:
         output_file = sample_musicxml_file.with_suffix(".png")
         assert output_file.exists()
 
-    def test_no_title_flag(self, sample_musicxml_file, tmp_path, capsys):
-        """Test --no-title option."""
-        with patch("sys.argv", [
-            "musicxml-to-png",
-            str(sample_musicxml_file),
-            "--no-title",
-        ]):
+    def test_title_hidden_by_default(self, sample_musicxml_file, tmp_path, monkeypatch):
+        """Title should be hidden unless explicitly requested or provided."""
+        captured = {}
+
+        def fake_convert_musicxml_to_png(**kwargs):
+            captured.update(kwargs)
+
+            class DummyPath(Path):
+                _flavour = Path(".")._flavour
+
+            out = tmp_path / "out.png"
+            out.touch()
+            return DummyPath(str(out))
+
+        monkeypatch.setattr("musicxml_to_png.cli.convert_musicxml_to_png", fake_convert_musicxml_to_png)
+
+        with patch("sys.argv", ["musicxml-to-png", str(sample_musicxml_file)]):
             main()
 
-        output_file = sample_musicxml_file.with_suffix(".png")
-        assert output_file.exists()
+        assert captured.get("show_title") is False
+        assert (tmp_path / "out.png").exists()
+
+    def test_show_title_flag(self, sample_musicxml_file, tmp_path, monkeypatch):
+        """--show-title should enable the default filename title."""
+        captured = {}
+
+        def fake_convert_musicxml_to_png(**kwargs):
+            captured.update(kwargs)
+
+            class DummyPath(Path):
+                _flavour = Path(".")._flavour
+
+            out = tmp_path / "out.png"
+            out.touch()
+            return DummyPath(str(out))
+
+        monkeypatch.setattr("musicxml_to_png.cli.convert_musicxml_to_png", fake_convert_musicxml_to_png)
+
+        with patch("sys.argv", ["musicxml-to-png", str(sample_musicxml_file), "--show-title"]):
+            main()
+
+        assert captured.get("show_title") is True
+        assert (tmp_path / "out.png").exists()
 
     def test_time_stretch_option(self, sample_musicxml_file, tmp_path, capsys):
         """Test --time-stretch option."""
