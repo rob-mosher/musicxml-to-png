@@ -1,6 +1,7 @@
 """Visualization helpers for MusicXML note events."""
 
 from dataclasses import dataclass, replace, field
+from math import hypot
 from pathlib import Path
 from typing import List, Optional, Tuple
 
@@ -80,7 +81,7 @@ class ConnectionConfig:
     fade_end: float = 8.0  # beats where alpha reaches min_alpha
     max_gap: Optional[float] = None  # skip drawing if connection gap exceeds this (in beats)
     linewidth: float = 1.5
-    curve_height_factor: float = 2.0  # Library-only: CLI no longer exposes this knob
+    curve_height_factor: float = 0.5  # Library-only: CLI no longer exposes this knob
 
     def alpha_for_length(
         self,
@@ -381,17 +382,24 @@ def _draw_note_connections(
 
         # Scale curve height by pitch distance; zero when pitches match
         pitch_delta = abs(y2 - y1)
-        pitch_scale = 0.0 if same_pitch else max(0.5, min(2.0, pitch_delta / 12.0))
+        if same_pitch:
+            pitch_scale = 0.0
+        else:
+            # Ease small intervals upward and gently clamp large ones
+            pitch_norm = min(pitch_delta / 24.0, 1.0)
+            pitch_scale = 0.5 + (2.0 - 0.5) * (pitch_norm ** 0.6)
         effective_curve = connection_config.curve_height_factor * pitch_scale
 
         # Give vertical/near-vertical links a small span so curvature is visible
-        min_curve_span = 0.05
-        span = max(gap, min_curve_span)
+        min_curve_span = 0.02
+        base_dx = max(gap, min_curve_span)
+        # Use geometric distance to reflect both time gap and pitch jump; exponent softens extremes
+        span = hypot(base_dx, pitch_delta) ** 0.5
 
         use_curve = effective_curve > 0 and gap >= 0 and not force_straight
 
         if use_curve:
-            cx = x1 + span / 2.0 if x2 >= x1 else (x1 + x2) / 2.0
+            cx = x1 + base_dx / 2.0 if x2 >= x1 else (x1 + x2) / 2.0
             cy = (y1 + y2) / 2.0 + effective_curve * span
             path_data = [
                 (MplPath.MOVETO, (x1, y1)),
