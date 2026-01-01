@@ -1233,7 +1233,7 @@ class TestConvertMusicxmlToPng:
         input_path = tmp_path / "test.mxl"
         score.write("musicxml", input_path)
 
-        output_path = convert_musicxml_to_png(input_path, show_title=False)
+        output_path = convert_musicxml_to_png(input_path, title=False)
         assert output_path.exists()
 
     def test_title_hidden_by_default(self, tmp_path, monkeypatch):

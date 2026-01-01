@@ -212,11 +212,11 @@ class TestCLIArguments:
         with patch("sys.argv", ["musicxml-to-png", str(sample_musicxml_file)]):
             main()
 
-        assert captured.get("show_title") is False
+        assert captured.get("title") is None
         assert (tmp_path / "out.png").exists()
 
-    def test_show_title_flag(self, sample_musicxml_file, tmp_path, monkeypatch):
-        """--show-title should enable the default filename title."""
+    def test_title_flag_defaults_to_filename(self, sample_musicxml_file, tmp_path, monkeypatch):
+        """--title with no value should enable the default filename title."""
         captured = {}
 
         def fake_convert_musicxml_to_png(**kwargs):
@@ -231,10 +231,32 @@ class TestCLIArguments:
 
         monkeypatch.setattr("musicxml_to_png.cli.convert_musicxml_to_png", fake_convert_musicxml_to_png)
 
-        with patch("sys.argv", ["musicxml-to-png", str(sample_musicxml_file), "--show-title"]):
+        with patch("sys.argv", ["musicxml-to-png", str(sample_musicxml_file), "--title"]):
             main()
 
-        assert captured.get("show_title") is True
+        assert captured.get("title") is True
+        assert (tmp_path / "out.png").exists()
+
+    def test_title_flag_accepts_custom_text(self, sample_musicxml_file, tmp_path, monkeypatch):
+        """--title should accept custom text and enable titles."""
+        captured = {}
+
+        def fake_convert_musicxml_to_png(**kwargs):
+            captured.update(kwargs)
+
+            class DummyPath(Path):
+                _flavour = Path(".")._flavour
+
+            out = tmp_path / "out.png"
+            out.touch()
+            return DummyPath(str(out))
+
+        monkeypatch.setattr("musicxml_to_png.cli.convert_musicxml_to_png", fake_convert_musicxml_to_png)
+
+        with patch("sys.argv", ["musicxml-to-png", str(sample_musicxml_file), "--title", "My Piece"]):
+            main()
+
+        assert captured.get("title") == "My Piece"
         assert (tmp_path / "out.png").exists()
 
     def test_time_stretch_option(self, sample_musicxml_file, tmp_path, capsys):

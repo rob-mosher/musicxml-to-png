@@ -96,9 +96,10 @@ Examples:
     parser.add_argument(
         "-t",
         "--title",
-        type=str,
+        nargs="?",
+        const=True,
         default=None,
-        help="Title for the visualization (default: input filename)",
+        help="Show a title; omit a value to use the input filename, or provide custom text.",
     )
     
     parser.add_argument(
@@ -123,12 +124,6 @@ Examples:
         "--no-legend",
         action="store_true",
         help="Disable the legend in the visualization",
-    )
-
-    parser.add_argument(
-        "--show-title",
-        action="store_true",
-        help="Show the plot title (filename by default, or --title if provided). Titles are hidden by default.",
     )
 
     parser.add_argument(
@@ -330,21 +325,20 @@ Examples:
             slice_mode = "bar" if mode_arg == "measure" else mode_arg
             slice_start, slice_end = start, end
 
-        # Determine title visibility: hidden by default unless explicitly shown or a custom title is provided
-        show_title = args.show_title or (args.title is not None)
+        title_arg = args.title
+        title_value = True if title_arg is True else title_arg
 
         # Perform conversion
         result_path = convert_musicxml_to_png(
             input_path=input_path,
             score=score,
             output_path=output_path,
-            title=args.title if not args.minimal else None,
+            title=title_value if not args.minimal else None,
             show_grid=not args.no_grid,
             minimal=args.minimal,
             ensemble=args.ensemble,
             show_rehearsal_marks=not args.no_rehearsal_marks,
             show_legend=not args.no_legend,
-            show_title=show_title,
             write_output=not args.no_output,
             time_stretch=args.time_stretch,
             fig_width=args.fig_width,

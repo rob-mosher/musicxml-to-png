@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Removed
+
+- Dropped the `--show-title` CLI flag and `show_title` library parameter; use `--title` (or `title=` in code) instead. Passing `--title` without a value uses the input filename; `title=True` does the same in code.
+
 ## [0.6.3] - 2026-01-01
 
 ### Added

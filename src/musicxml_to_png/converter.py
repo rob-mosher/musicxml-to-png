@@ -112,13 +112,12 @@ def convert_musicxml_to_png(
     input_path: Path,
     score: Optional[stream.Score] = None,  # Optional pre-parsed music21 Score to avoid re-parsing
     output_path: Optional[Path] = None,
-    title: Optional[str] = None,
+    title: Optional[str | bool] = None,  # True uses filename; str uses custom text; None/False hides title
     show_grid: bool = True,
     minimal: bool = False,
     ensemble: str = ENSEMBLE_UNGROUPED,
     show_rehearsal_marks: bool = True,
     show_legend: bool = True,
-    show_title: bool = False,
     write_output: bool = True,
     dpi: int = 150,
     time_stretch: float = 1.0,
@@ -195,14 +194,22 @@ def convert_musicxml_to_png(
         (slice_window[1] - slice_window[0]) if slice_window is not None else canonical_score_duration
     )
 
-    user_supplied_title = title is not None
-    if title is None:
-        title = input_path.stem
-
-    effective_show_title = bool(show_title) or user_supplied_title
+    # Determine title text and visibility from a single parameter:
+    # - title=True: show filename as title
+    # - title=<string>: show custom title
+    # - title=None/False: hide title
+    effective_title = None
+    effective_show_title = False
+    if isinstance(title, bool):
+        if title:
+            effective_show_title = True
+            effective_title = input_path.stem
+    elif title:
+        effective_show_title = True
+        effective_title = str(title)
 
     if minimal:
-        title = None
+        effective_title = None
         effective_show_title = False
 
     viz_config = VisualizationConfig(
@@ -243,7 +250,7 @@ def convert_musicxml_to_png(
     create_visualization(
         note_events,
         output_path,
-        title,
+        effective_title,
         score_duration,
         rehearsal_marks=rehearsal_marks,
         measure_ticks=measure_ticks,

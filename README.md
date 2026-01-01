@@ -43,7 +43,7 @@ musicxml-to-png your-score.mxl --ensemble bigband --minimal -o output.png
 **Common Customization:**
 - Grid lines (enabled by default, disable with `--no-grid`)
 - Minimal mode (remove all labels, legend, title, borders, `--minimal`)
-- Custom titles (`-t "Custom Title"`)
+- Custom titles (`--title`, omit value to use the filename)
 - Output DPI control: `--dpi` (default 150)
 - Transparent background: `--transparent` for PNG output with transparent backgrounds (useful for overlays)
 - Note connections (beta): `--show-connections` to visualize connections between adjacent notes with straight lines
@@ -79,7 +79,7 @@ musicxml-to-png input.mxl -o output.png
 
 # Add custom title
 musicxml-to-png input.mxl --title "My Composition"
-# Titles are hidden by default; use --show-title or --title to display one
+# Titles are hidden by default; use --title (optionally with custom text) to display one
 
 # Ensemble types - select instrument categorization scheme
 musicxml-to-png input.mxl                              # Ungrouped (default) - every instrument gets its own color
@@ -102,7 +102,8 @@ musicxml-to-png input.mxl --transparent
 # Control visibility of specific elements
 musicxml-to-png input.mxl --no-rehearsal-marks  # Hide rehearsal marks
 musicxml-to-png input.mxl --no-legend          # Hide legend
-musicxml-to-png input.mxl --show-title         # Show title (hidden by default, uses filename)
+musicxml-to-png input.mxl --title              # Show title (hidden by default, uses filename)
+musicxml-to-png input.mxl --title "My Piece"   # Show custom title text
 
 # Output quality
 musicxml-to-png input.mxl --dpi 300            # Higher resolution (default 150)
@@ -156,7 +157,7 @@ output_path = convert_musicxml_to_png(
     title="My Composition"           # Optional
 )
 
-# Titles are hidden by default; pass show_title=True or supply a title to display one.
+# Titles are hidden by default; pass title=True (uses filename) or supply a title string to display one.
 
 # With common options
 output_path = convert_musicxml_to_png(
@@ -170,7 +171,7 @@ output_path = convert_musicxml_to_png(
     show_connections=True,       # Show note connections (beta)
     show_rehearsal_marks=False,  # Hide rehearsal marks
     show_legend=False,           # Hide legend
-    show_title=True,             # Show title (default hidden)
+    title=True,                  # Show title using filename (default hidden)
     dpi=300,                     # Higher resolution
     timeline_unit="beat"         # Show beats instead of bars
 )
