@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Split the legend helper into separate width/opacity hints and moved the connection line hint above them to keep legend items narrower.
+
 ## [0.6.2] - 2025-12-31
 
 ### Changed

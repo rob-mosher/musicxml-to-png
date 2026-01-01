@@ -607,13 +607,6 @@ def _build_legend(
                 legend_elements.append(mpatches.Patch(color=color_context.color_map[label], label=label))
 
     if legend_elements and not minimal and show_legend:
-        legend_elements.append(
-            mpatches.Patch(
-                facecolor="none",
-                edgecolor="none",
-                label="Width = stacked pitches; Opacity = dynamics",
-            )
-        )
         if show_connections:
             legend_elements.append(
                 Line2D(
@@ -626,6 +619,20 @@ def _build_legend(
                     label="Lines = adjacent notes",
                 )
             )
+        legend_elements.append(
+            mpatches.Patch(
+                facecolor="none",
+                edgecolor="none",
+                label="Width = stacked pitches",
+            )
+        )
+        legend_elements.append(
+            mpatches.Patch(
+                facecolor="none",
+                edgecolor="none",
+                label="Opacity = dynamics",
+            )
+        )
         ax.legend(handles=legend_elements, loc="upper right", fontsize=10)
 
 
