@@ -131,9 +131,6 @@ def convert_musicxml_to_png(
     timeline_unit: str = "bar",
     transparent: bool = False,
     show_connections: bool = False,
-    connection_max_gap: Optional[float] = None,
-    connection_fade_start: Optional[float] = None,
-    connection_fade_end: Optional[float] = None,
     connection_linewidth: Optional[float] = None,
 ) -> Path:
     """Convert a MusicXML file to a PNG visualization."""
@@ -216,9 +213,6 @@ def convert_musicxml_to_png(
         show_connections=show_connections,
     )
     connection_config = viz_config.connections.with_overrides(
-        fade_start=connection_fade_start,
-        fade_end=connection_fade_end,
-        max_gap=connection_max_gap,
         linewidth=connection_linewidth,
     )
     viz_config = viz_config.with_overrides(connections=connection_config)

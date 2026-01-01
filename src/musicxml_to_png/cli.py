@@ -244,24 +244,6 @@ Examples:
         help="Show curved lines connecting adjacent notes (no rest between) within each instrument.",
     )
     parser.add_argument(
-        "--connection-max-gap",
-        type=float,
-        default=None,
-        help="Skip drawing connection lines when the gap from note end to next start exceeds this many beats (advanced).",
-    )
-    parser.add_argument(
-        "--connection-fade-start",
-        type=float,
-        default=None,
-        help="Length in beats where connection line fading begins (default 4.0, advanced).",
-    )
-    parser.add_argument(
-        "--connection-fade-end",
-        type=float,
-        default=None,
-        help="Length in beats where connection line fading reaches minimum opacity (default 8.0, advanced).",
-    )
-    parser.add_argument(
         "--connection-linewidth",
         type=float,
         default=None,
@@ -313,6 +295,14 @@ Examples:
 
     if args.show_connections:
         print("Info: --show-connections is in beta and may have edge cases. Feedback welcome!", file=sys.stderr)
+    if args.connection_linewidth is not None and not args.show_connections:
+        print(
+            "Info: --connection-linewidth is ignored unless --show-connections is set.",
+            file=sys.stderr,
+        )
+        connection_linewidth = None
+    else:
+        connection_linewidth = args.connection_linewidth
 
     try:
         # Validate staccato factor
@@ -364,10 +354,7 @@ Examples:
             timeline_unit=args.timeline_unit,
             transparent=args.transparent,
             show_connections=args.show_connections,
-            connection_max_gap=args.connection_max_gap,
-            connection_fade_start=args.connection_fade_start,
-            connection_fade_end=args.connection_fade_end,
-            connection_linewidth=args.connection_linewidth,
+            connection_linewidth=connection_linewidth,
         )
         if not args.no_output:
             print(f"Successfully created visualization: {result_path}")

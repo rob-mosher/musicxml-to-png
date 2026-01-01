@@ -120,8 +120,8 @@ class TestCLIArguments:
         ]):
             main()
 
-    def test_connection_tuning_flags(self, sample_musicxml_file, tmp_path, monkeypatch):
-        """Advanced connection tuning flags should pass through to converter."""
+    def test_connection_linewidth_flag(self, sample_musicxml_file, tmp_path, monkeypatch):
+        """Connection linewidth flag should pass through to converter."""
         captured = {}
 
         def fake_convert_musicxml_to_png(**kwargs):
@@ -140,12 +140,6 @@ class TestCLIArguments:
             "musicxml-to-png",
             str(sample_musicxml_file),
             "--show-connections",
-            "--connection-max-gap",
-            "2.5",
-            "--connection-fade-start",
-            "3",
-            "--connection-fade-end",
-            "6",
             "--connection-linewidth",
             "2.0",
         ]
@@ -153,10 +147,38 @@ class TestCLIArguments:
             main()
 
         assert captured.get("show_connections") is True
-        assert captured.get("connection_max_gap") == 2.5
-        assert captured.get("connection_fade_start") == 3
-        assert captured.get("connection_fade_end") == 6
         assert captured.get("connection_linewidth") == 2.0
+        assert (tmp_path / "out.png").exists()
+
+    def test_connection_linewidth_warns_without_show(self, sample_musicxml_file, tmp_path, monkeypatch, capsys):
+        """Linewidth flag without --show-connections should warn and be ignored."""
+        captured = {}
+
+        def fake_convert_musicxml_to_png(**kwargs):
+            captured.update(kwargs)
+
+            class DummyPath(Path):
+                _flavour = Path(".")._flavour
+
+            out = tmp_path / "out.png"
+            out.touch()
+            return DummyPath(str(out))
+
+        monkeypatch.setattr("musicxml_to_png.cli.convert_musicxml_to_png", fake_convert_musicxml_to_png)
+
+        argv = [
+            "musicxml-to-png",
+            str(sample_musicxml_file),
+            "--connection-linewidth",
+            "1.8",
+        ]
+        with patch("sys.argv", argv):
+            main()
+
+        stderr = capsys.readouterr().err
+        assert "Info: --connection-linewidth is ignored unless --show-connections is set." in stderr
+        assert captured.get("show_connections") is False
+        assert captured.get("connection_linewidth") is None
         assert (tmp_path / "out.png").exists()
 
     def test_no_legend_flag(self, sample_musicxml_file, tmp_path, capsys):

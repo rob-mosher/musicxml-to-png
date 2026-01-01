@@ -77,9 +77,9 @@ class ConnectionConfig:
 
     alpha: float = 0.6
     min_alpha: float = 0.25
-    fade_start: float = 4.0  # beats where fading begins
-    fade_end: float = 8.0  # beats where alpha reaches min_alpha
-    max_gap: Optional[float] = None  # skip drawing if connection gap exceeds this (in beats)
+    fade_start: float = 4.0  # beats where fading begins (internal default)
+    fade_end: float = 8.0  # beats where alpha reaches min_alpha (internal default)
+    max_gap: Optional[float] = None  # skip drawing if connection gap exceeds this (in beats; internal default)
     linewidth: float = 1.5
     curve_height_factor: float = 0.5  # Library-only: CLI no longer exposes this knob
 

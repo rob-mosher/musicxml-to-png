@@ -6,12 +6,12 @@ This document outlines planned features and improvements for musicxml-to-png.
 
 - Additional ensemble types (jazz combo, chamber, wind ensemble)
 - Articulation markers
+- Observability: add structured logging/verbosity controls when the surface area grows; keep simple stderr notes until then.
 - Connection UX polish:
-  - presets for curvature/alpha/max-gap and a sensible default max-gap
+  - presets for curvature/alpha and refined default gap handling
   - curved/straight toggle in CLI and library presets
   - SVG export option for vector-friendly connections/lines
   - connection trimming/z-order so lines sit behind notebars without losing continuity
-  - reassess connection max-gap/fade usefulness after more musical cases; keep beta flag until then
 
 ## Long-term vision
 

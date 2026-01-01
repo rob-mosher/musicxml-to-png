@@ -1549,8 +1549,8 @@ class TestNoteConnections:
         connected_pairs = {(note_events[i].pitch_midi, note_events[j].pitch_midi) for i, j in connections}
         assert (72.0, 72.0) not in connected_pairs
 
-    def test_connection_config_passes_through_converter(self, tmp_path, monkeypatch):
-        """Connection styling overrides should reach visualization config."""
+    def test_connection_linewidth_override_passes_through_converter(self, tmp_path, monkeypatch):
+        """Connection linewidth override should reach visualization config while other defaults stay intact."""
         score = stream.Score()
         part = stream.Part()
         part.append(instrument.Violin())
@@ -1575,9 +1575,6 @@ class TestNoteConnections:
             score=score,
             output_path=tmp_path / "out.png",
             show_connections=True,
-            connection_max_gap=1.5,
-            connection_fade_start=2.0,
-            connection_fade_end=4.0,
             connection_linewidth=1.3,
             write_output=False,
         )
@@ -1585,10 +1582,10 @@ class TestNoteConnections:
         cfg = captured.get("config")
         assert cfg is not None
         conn_cfg = cfg.connections
-        assert conn_cfg.max_gap == 1.5
-        assert conn_cfg.fade_start == 2.0
-        assert conn_cfg.fade_end == 4.0
         assert conn_cfg.linewidth == 1.3
+        assert conn_cfg.max_gap is None
+        assert conn_cfg.fade_start == conn_cfg.__class__().fade_start
+        assert conn_cfg.fade_end == conn_cfg.__class__().fade_end
 
 
 class TestConvertMusicxmlToPngErrors:
