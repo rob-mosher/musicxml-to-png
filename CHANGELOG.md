@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-01-01
+
 ### Added
 
 - For Developers: Introduced a `sandbox/` directory (gitignored except for `.gitkeep`) for local/manual MusicXML/PNG samples to keep the worktree clean.
@@ -204,6 +206,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Virtual environment setup and dependency management
 - MIT License
 
+[0.6.3]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.6.3
 [0.6.2]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.6.2
 [0.6.1]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.6.1
 [0.6.0]: https://github.com/rob-mosher/musicxml-to-png/releases/tag/v0.6.0
