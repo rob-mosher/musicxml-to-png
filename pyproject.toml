@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "musicxml-to-png"
-version = "0.6.3"
+version = "0.6.4a1"
 description = "Convert MusicXML files into clean, analyzable PNG visualizations"
 readme = "README.md"
 requires-python = ">=3.12"
